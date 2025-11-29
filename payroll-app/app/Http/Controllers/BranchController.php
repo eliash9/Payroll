@@ -2,25 +2,37 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Branch;
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class BranchController extends Controller
 {
     public function index()
     {
-        $branches = DB::table('branches')
-            ->join('companies', 'companies.id', '=', 'branches.company_id')
-            ->select('branches.*', 'companies.name as company_name')
-            ->orderBy('branches.name')
-            ->paginate(20);
+        $query = Branch::query();
+        
+        // HasCompanyScope trait should handle filtering if applied.
+        // But for safety and explicit control in controller:
+        if (Auth::user()->company_id) {
+            $query->where('company_id', Auth::user()->company_id);
+        }
+
+        $branches = $query->orderBy('name')->paginate(20);
 
         return view('masters.branches.index', compact('branches'));
     }
 
     public function create()
     {
-        $companies = DB::table('companies')->pluck('name', 'id');
+        $companiesQuery = Company::query();
+        if (Auth::user()->company_id) {
+            $companiesQuery->where('id', Auth::user()->company_id);
+        }
+        $companies = $companiesQuery->pluck('name', 'id');
+        
         return view('masters.branches.create', compact('companies'));
     }
 
@@ -34,28 +46,39 @@ class BranchController extends Controller
             'phone' => 'nullable|string|max:50',
         ]);
 
-        $now = now();
-        DB::table('branches')->insert(array_merge($data, [
-            'created_at' => $now,
-            'updated_at' => $now,
-        ]));
+        if (Auth::user()->company_id && $data['company_id'] != Auth::user()->company_id) {
+            abort(403, 'Unauthorized company selection.');
+        }
+
+        Branch::create($data);
 
         return redirect()->route('branches.index')->with('success', 'Cabang ditambahkan.');
     }
 
     public function edit(int $id)
     {
-        $branch = DB::table('branches')->find($id);
-        abort_unless($branch, 404);
-        $companies = DB::table('companies')->pluck('name', 'id');
+        $branch = Branch::findOrFail($id);
+        
+        if (Auth::user()->company_id && $branch->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this branch.');
+        }
+
+        $companiesQuery = Company::query();
+        if (Auth::user()->company_id) {
+            $companiesQuery->where('id', Auth::user()->company_id);
+        }
+        $companies = $companiesQuery->pluck('name', 'id');
 
         return view('masters.branches.edit', compact('branch', 'companies'));
     }
 
     public function update(Request $request, int $id)
     {
-        $branch = DB::table('branches')->find($id);
-        abort_unless($branch, 404);
+        $branch = Branch::findOrFail($id);
+        
+        if (Auth::user()->company_id && $branch->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this branch.');
+        }
 
         $data = $request->validate([
             'company_id' => 'required|integer|exists:companies,id',
@@ -64,16 +87,25 @@ class BranchController extends Controller
             'address' => 'nullable|string',
             'phone' => 'nullable|string|max:50',
         ]);
+        
+        if (Auth::user()->company_id && $data['company_id'] != Auth::user()->company_id) {
+            abort(403, 'Unauthorized company selection.');
+        }
 
-        $data['updated_at'] = now();
-        DB::table('branches')->where('id', $id)->update($data);
+        $branch->update($data);
 
         return redirect()->route('branches.index')->with('success', 'Cabang diperbarui.');
     }
 
     public function destroy(int $id)
     {
-        DB::table('branches')->where('id', $id)->delete();
+        $branch = Branch::findOrFail($id);
+        
+        if (Auth::user()->company_id && $branch->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this branch.');
+        }
+
+        $branch->delete();
         return redirect()->route('branches.index')->with('success', 'Cabang dihapus.');
     }
 }

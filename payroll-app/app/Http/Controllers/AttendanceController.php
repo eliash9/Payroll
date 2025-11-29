@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AttendanceSummary;
+use App\Models\Employee;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class AttendanceController extends Controller
@@ -13,14 +16,30 @@ class AttendanceController extends Controller
         $start = "{$period}-01";
         $end = now()->parse($start)->endOfMonth()->toDateString();
 
-        $summaries = DB::table('attendance_summaries as a')
+        // Use Eloquent or DB with scope
+        // AttendanceSummary model might not exist or needs CompanyScope
+        // Let's assume we use DB for performance but filter by company_id manually if needed, 
+        // OR use Eloquent if we want to be clean.
+        // Given the user request, let's stick to Eloquent if possible or strict DB filtering.
+        
+        $query = DB::table('attendance_summaries as a')
             ->join('employees as e', 'e.id', '=', 'a.employee_id')
-            ->select('a.*', 'e.full_name', 'e.employee_code')
-            ->whereBetween('a.work_date', [$start, $end])
+            ->leftJoin('branches as b', 'b.id', '=', 'e.branch_id')
+            ->select('a.*', 'e.full_name', 'e.employee_code', 'b.name as branch_name');
+
+        if (Auth::user()->company_id) {
+            $query->where('e.company_id', Auth::user()->company_id);
+        }
+
+        $summaries = $query->whereBetween('a.work_date', [$start, $end])
             ->orderByDesc('a.work_date')
             ->paginate(50);
 
-        $employees = DB::table('employees')->orderBy('full_name')->get(['id', 'full_name', 'employee_code']);
+        $employeesQuery = Employee::query();
+        if (Auth::user()->company_id) {
+            $employeesQuery->where('company_id', Auth::user()->company_id);
+        }
+        $employees = $employeesQuery->orderBy('full_name')->get(['id', 'full_name', 'employee_code']);
 
         return view('attendance.index', compact('period', 'summaries', 'employees'));
     }
@@ -34,6 +53,12 @@ class AttendanceController extends Controller
             'time' => 'required',
             'worked_minutes' => 'nullable|integer',
         ]);
+        
+        // Verify employee belongs to company
+        $employee = Employee::findOrFail($data['employee_id']);
+        if (Auth::user()->company_id && $employee->company_id != Auth::user()->company_id) {
+            abort(403, 'Invalid employee selected.');
+        }
 
         $dateTime = "{$data['work_date']} {$data['time']}";
         $update = ['updated_at' => now()];

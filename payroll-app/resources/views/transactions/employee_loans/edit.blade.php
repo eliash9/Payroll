@@ -32,11 +32,11 @@
                     </div>
                     <div>
                         <label class="text-sm">Cicilan per Periode</label>
-                        <input name="installment_amount" type="number" step="0.01" class="w-full border rounded px-3 py-2" required value="{{ old('installment_amount', $loan->installment_amount) }}">
+                        <input name="installment_amount" type="number" step="0.01" class="w-full border rounded px-3 py-2 text-right" required value="{{ old('installment_amount', $loan->installment_amount) }}">
                     </div>
                     <div>
                         <label class="text-sm">Sisa Pokok</label>
-                        <input name="remaining_amount" type="number" step="0.01" class="w-full border rounded px-3 py-2" required value="{{ old('remaining_amount', $loan->remaining_amount) }}">
+                        <input name="remaining_amount" type="number" step="0.01" class="w-full border rounded px-3 py-2 text-right" required value="{{ old('remaining_amount', $loan->remaining_amount) }}">
                     </div>
                 </div>
                 <div class="flex gap-2">

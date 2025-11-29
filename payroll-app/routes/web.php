@@ -32,14 +32,14 @@ Route::middleware(['auth', 'verified', 'company.scope'])->group(function () {
     Route::get('/dashboard/volunteer', [DashboardController::class, 'volunteer'])->name('dashboard.volunteer');
 });
 
-Route::middleware(['auth', 'verified', 'company.scope', 'role:admin'])->group(function () {
+Route::middleware(['auth', 'verified', 'company.scope', 'role:admin,manager'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'admin'])->name('dashboard');
 
     Route::get('/payslips', [PayslipController::class, 'index'])->name('payslips.index');
     Route::get('/payslip/{periodId}/{employeeId}', [PayslipController::class, 'show'])->name('payslips.show');
 
     Route::resource('employees', EmployeeController::class)->except(['show']);
-    Route::resource('companies', CompanyController::class)->except(['show']);
+    // Branches, Departments, etc. are usually company-specific, so managers can manage them.
     Route::resource('branches', BranchController::class)->except(['show']);
     Route::resource('departments', DepartmentController::class)->except(['show']);
     Route::resource('positions', PositionController::class)->except(['show']);
@@ -59,7 +59,6 @@ Route::middleware(['auth', 'verified', 'company.scope', 'role:admin'])->group(fu
     Route::resource('expense-claims', ExpenseClaimUiController::class)->only(['index', 'create', 'store']);
     Route::post('expense-claims/{id}/status', [ExpenseClaimUiController::class, 'updateStatus'])->name('expense-claims.update-status');
 
-    Route::resource('users', UserController::class)->except(['show']);
     Route::post('/payroll-periods/{id}/approve', [PayrollPeriodController::class, 'approve'])->name('payroll.periods.approve');
 
     Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
@@ -83,6 +82,18 @@ Route::middleware(['auth', 'verified', 'company.scope', 'role:admin'])->group(fu
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Reports
+    Route::get('/reports', [App\Http\Controllers\ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/payroll', [App\Http\Controllers\ReportController::class, 'payroll'])->name('reports.payroll');
+    Route::get('/reports/attendance', [App\Http\Controllers\ReportController::class, 'attendance'])->name('reports.attendance');
+    Route::get('/reports/fundraising', [App\Http\Controllers\ReportController::class, 'fundraising'])->name('reports.fundraising');
+});
+
+// Admin only routes (Super Admin or System Admin)
+Route::middleware(['auth', 'verified', 'company.scope', 'role:admin'])->group(function () {
+    Route::resource('companies', CompanyController::class)->except(['show']);
+    Route::resource('users', UserController::class)->except(['show']);
 });
 
 require __DIR__.'/auth.php';

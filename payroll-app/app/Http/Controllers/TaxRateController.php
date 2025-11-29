@@ -2,17 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\TaxRate;
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class TaxRateController extends Controller
 {
     public function index()
     {
-        $taxRates = DB::table('tax_rates')
-            ->join('companies', 'companies.id', '=', 'tax_rates.company_id')
-            ->select('tax_rates.*', 'companies.name as company_name')
-            ->orderBy('year', 'desc')
+        $query = TaxRate::query();
+        
+        if (Auth::user()->company_id) {
+            $query->where('company_id', Auth::user()->company_id);
+        }
+
+        $taxRates = $query->orderBy('year', 'desc')
             ->orderBy('range_min')
             ->paginate(20);
 
@@ -21,7 +27,12 @@ class TaxRateController extends Controller
 
     public function create()
     {
-        $companies = DB::table('companies')->pluck('name', 'id');
+        $companiesQuery = Company::query();
+        if (Auth::user()->company_id) {
+            $companiesQuery->where('id', Auth::user()->company_id);
+        }
+        $companies = $companiesQuery->pluck('name', 'id');
+        
         return view('masters.tax_rates.create', compact('companies'));
     }
 
@@ -35,28 +46,39 @@ class TaxRateController extends Controller
             'rate_percent' => 'required|numeric|min:0',
         ]);
 
-        $now = now();
-        DB::table('tax_rates')->insert(array_merge($data, [
-            'created_at' => $now,
-            'updated_at' => $now,
-        ]));
+        if (Auth::user()->company_id && $data['company_id'] != Auth::user()->company_id) {
+            abort(403, 'Unauthorized company selection.');
+        }
+
+        TaxRate::create($data);
 
         return redirect()->route('tax-rates.index')->with('success', 'Tarif pajak ditambahkan.');
     }
 
     public function edit(int $id)
     {
-        $taxRate = DB::table('tax_rates')->find($id);
-        abort_unless($taxRate, 404);
-        $companies = DB::table('companies')->pluck('name', 'id');
+        $taxRate = TaxRate::findOrFail($id);
+        
+        if (Auth::user()->company_id && $taxRate->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this tax rate.');
+        }
+
+        $companiesQuery = Company::query();
+        if (Auth::user()->company_id) {
+            $companiesQuery->where('id', Auth::user()->company_id);
+        }
+        $companies = $companiesQuery->pluck('name', 'id');
 
         return view('masters.tax_rates.edit', compact('taxRate', 'companies'));
     }
 
     public function update(Request $request, int $id)
     {
-        $taxRate = DB::table('tax_rates')->find($id);
-        abort_unless($taxRate, 404);
+        $taxRate = TaxRate::findOrFail($id);
+        
+        if (Auth::user()->company_id && $taxRate->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this tax rate.');
+        }
 
         $data = $request->validate([
             'company_id' => 'required|integer|exists:companies,id',
@@ -65,16 +87,25 @@ class TaxRateController extends Controller
             'range_max' => 'nullable|numeric|min:0',
             'rate_percent' => 'required|numeric|min:0',
         ]);
+        
+        if (Auth::user()->company_id && $data['company_id'] != Auth::user()->company_id) {
+            abort(403, 'Unauthorized company selection.');
+        }
 
-        $data['updated_at'] = now();
-        DB::table('tax_rates')->where('id', $id)->update($data);
+        $taxRate->update($data);
 
         return redirect()->route('tax-rates.index')->with('success', 'Tarif pajak diperbarui.');
     }
 
     public function destroy(int $id)
     {
-        DB::table('tax_rates')->where('id', $id)->delete();
+        $taxRate = TaxRate::findOrFail($id);
+        
+        if (Auth::user()->company_id && $taxRate->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this tax rate.');
+        }
+
+        $taxRate->delete();
         return redirect()->route('tax-rates.index')->with('success', 'Tarif pajak dihapus.');
     }
 }

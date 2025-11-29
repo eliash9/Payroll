@@ -2,25 +2,35 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\KpiMaster;
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class KpiMasterController extends Controller
 {
     public function index()
     {
-        $kpis = DB::table('kpi_master')
-            ->join('companies', 'companies.id', '=', 'kpi_master.company_id')
-            ->select('kpi_master.*', 'companies.name as company_name')
-            ->orderBy('name')
-            ->paginate(20);
+        $query = KpiMaster::query();
+        
+        if (Auth::user()->company_id) {
+            $query->where('company_id', Auth::user()->company_id);
+        }
+
+        $kpis = $query->orderBy('name')->paginate(20);
 
         return view('masters.kpi.index', compact('kpis'));
     }
 
     public function create()
     {
-        $companies = DB::table('companies')->pluck('name', 'id');
+        $companiesQuery = Company::query();
+        if (Auth::user()->company_id) {
+            $companiesQuery->where('id', Auth::user()->company_id);
+        }
+        $companies = $companiesQuery->pluck('name', 'id');
+        
         return view('masters.kpi.create', compact('companies'));
     }
 
@@ -38,28 +48,39 @@ class KpiMasterController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        $now = now();
-        DB::table('kpi_master')->insert(array_merge($data, [
-            'created_at' => $now,
-            'updated_at' => $now,
-        ]));
+        if (Auth::user()->company_id && $data['company_id'] != Auth::user()->company_id) {
+            abort(403, 'Unauthorized company selection.');
+        }
+
+        KpiMaster::create($data);
 
         return redirect()->route('kpi.index')->with('success', 'KPI ditambahkan.');
     }
 
     public function edit(int $id)
     {
-        $kpi = DB::table('kpi_master')->find($id);
-        abort_unless($kpi, 404);
-        $companies = DB::table('companies')->pluck('name', 'id');
+        $kpi = KpiMaster::findOrFail($id);
+        
+        if (Auth::user()->company_id && $kpi->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this KPI.');
+        }
+
+        $companiesQuery = Company::query();
+        if (Auth::user()->company_id) {
+            $companiesQuery->where('id', Auth::user()->company_id);
+        }
+        $companies = $companiesQuery->pluck('name', 'id');
 
         return view('masters.kpi.edit', compact('kpi', 'companies'));
     }
 
     public function update(Request $request, int $id)
     {
-        $kpi = DB::table('kpi_master')->find($id);
-        abort_unless($kpi, 404);
+        $kpi = KpiMaster::findOrFail($id);
+        
+        if (Auth::user()->company_id && $kpi->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this KPI.');
+        }
 
         $data = $request->validate([
             'company_id' => 'required|integer|exists:companies,id',
@@ -72,16 +93,25 @@ class KpiMasterController extends Controller
             'category' => 'required|in:individual,team,division',
             'description' => 'nullable|string',
         ]);
+        
+        if (Auth::user()->company_id && $data['company_id'] != Auth::user()->company_id) {
+            abort(403, 'Unauthorized company selection.');
+        }
 
-        $data['updated_at'] = now();
-        DB::table('kpi_master')->where('id', $id)->update($data);
+        $kpi->update($data);
 
         return redirect()->route('kpi.index')->with('success', 'KPI diperbarui.');
     }
 
     public function destroy(int $id)
     {
-        DB::table('kpi_master')->where('id', $id)->delete();
+        $kpi = KpiMaster::findOrFail($id);
+        
+        if (Auth::user()->company_id && $kpi->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this KPI.');
+        }
+
+        $kpi->delete();
         return redirect()->route('kpi.index')->with('success', 'KPI dihapus.');
     }
 }

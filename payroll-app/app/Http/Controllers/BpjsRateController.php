@@ -2,25 +2,35 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BpjsRate;
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class BpjsRateController extends Controller
 {
     public function index()
     {
-        $rates = DB::table('bpjs_rates')
-            ->join('companies', 'companies.id', '=', 'bpjs_rates.company_id')
-            ->select('bpjs_rates.*', 'companies.name as company_name')
-            ->orderBy('effective_from', 'desc')
-            ->paginate(20);
+        $query = BpjsRate::query();
+        
+        if (Auth::user()->company_id) {
+            $query->where('company_id', Auth::user()->company_id);
+        }
+
+        $rates = $query->orderBy('effective_from', 'desc')->paginate(20);
 
         return view('masters.bpjs_rates.index', compact('rates'));
     }
 
     public function create()
     {
-        $companies = DB::table('companies')->pluck('name', 'id');
+        $companiesQuery = Company::query();
+        if (Auth::user()->company_id) {
+            $companiesQuery->where('id', Auth::user()->company_id);
+        }
+        $companies = $companiesQuery->pluck('name', 'id');
+        
         return view('masters.bpjs_rates.create', compact('companies'));
     }
 
@@ -37,28 +47,39 @@ class BpjsRateController extends Controller
             'effective_to' => 'nullable|date|after_or_equal:effective_from',
         ]);
 
-        $now = now();
-        DB::table('bpjs_rates')->insert(array_merge($data, [
-            'created_at' => $now,
-            'updated_at' => $now,
-        ]));
+        if (Auth::user()->company_id && $data['company_id'] != Auth::user()->company_id) {
+            abort(403, 'Unauthorized company selection.');
+        }
+
+        BpjsRate::create($data);
 
         return redirect()->route('bpjs-rates.index')->with('success', 'Tarif BPJS ditambahkan.');
     }
 
     public function edit(int $id)
     {
-        $bpjsRate = DB::table('bpjs_rates')->find($id);
-        abort_unless($bpjsRate, 404);
-        $companies = DB::table('companies')->pluck('name', 'id');
+        $bpjsRate = BpjsRate::findOrFail($id);
+        
+        if (Auth::user()->company_id && $bpjsRate->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this rate.');
+        }
+
+        $companiesQuery = Company::query();
+        if (Auth::user()->company_id) {
+            $companiesQuery->where('id', Auth::user()->company_id);
+        }
+        $companies = $companiesQuery->pluck('name', 'id');
 
         return view('masters.bpjs_rates.edit', compact('bpjsRate', 'companies'));
     }
 
     public function update(Request $request, int $id)
     {
-        $bpjsRate = DB::table('bpjs_rates')->find($id);
-        abort_unless($bpjsRate, 404);
+        $bpjsRate = BpjsRate::findOrFail($id);
+        
+        if (Auth::user()->company_id && $bpjsRate->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this rate.');
+        }
 
         $data = $request->validate([
             'company_id' => 'required|integer|exists:companies,id',
@@ -70,16 +91,25 @@ class BpjsRateController extends Controller
             'effective_from' => 'required|date',
             'effective_to' => 'nullable|date|after_or_equal:effective_from',
         ]);
+        
+        if (Auth::user()->company_id && $data['company_id'] != Auth::user()->company_id) {
+            abort(403, 'Unauthorized company selection.');
+        }
 
-        $data['updated_at'] = now();
-        DB::table('bpjs_rates')->where('id', $id)->update($data);
+        $bpjsRate->update($data);
 
         return redirect()->route('bpjs-rates.index')->with('success', 'Tarif BPJS diperbarui.');
     }
 
     public function destroy(int $id)
     {
-        DB::table('bpjs_rates')->where('id', $id)->delete();
+        $bpjsRate = BpjsRate::findOrFail($id);
+        
+        if (Auth::user()->company_id && $bpjsRate->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this rate.');
+        }
+
+        $bpjsRate->delete();
         return redirect()->route('bpjs-rates.index')->with('success', 'Tarif BPJS dihapus.');
     }
 }

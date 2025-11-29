@@ -18,7 +18,6 @@
                 <tr class="bg-slate-100 text-left">
                     <th class="px-3 py-2">Kode</th>
                     <th class="px-3 py-2">Nama</th>
-                    <th class="px-3 py-2">Perusahaan</th>
                     <th class="px-3 py-2">Telepon</th>
                     <th class="px-3 py-2">Aksi</th>
                 </tr>
@@ -28,7 +27,6 @@
                     <tr class="border-t">
                         <td class="px-3 py-2">{{ $branch->code }}</td>
                         <td class="px-3 py-2">{{ $branch->name }}</td>
-                        <td class="px-3 py-2">{{ $branch->company_name }}</td>
                         <td class="px-3 py-2">{{ $branch->phone }}</td>
                         <td class="px-3 py-2 space-x-2">
                             <a class="text-blue-600 underline" href="{{ route('branches.edit', $branch->id) }}">Edit</a>

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Employee extends Model
 {
     use \Illuminate\Database\Eloquent\SoftDeletes;
+    use \App\Traits\HasCompanyScope;
 
     protected $guarded = ['id'];
 
@@ -24,6 +25,21 @@ class Employee extends Model
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function position()
+    {
+        return $this->belongsTo(Position::class);
     }
 
     public function fundraisingTransactions()

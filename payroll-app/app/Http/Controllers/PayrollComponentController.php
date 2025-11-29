@@ -2,18 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PayrollComponent;
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class PayrollComponentController extends Controller
 {
     public function index()
     {
-        $components = DB::table('payroll_components')
-            ->join('companies', 'companies.id', '=', 'payroll_components.company_id')
-            ->select('payroll_components.*', 'companies.name as company_name')
-            ->orderBy('payroll_components.sequence')
-            ->orderBy('payroll_components.name')
+        $query = PayrollComponent::query();
+        
+        if (Auth::user()->company_id) {
+            $query->where('company_id', Auth::user()->company_id);
+        }
+
+        $components = $query->orderBy('sequence')
+            ->orderBy('name')
             ->paginate(20);
 
         return view('masters.payroll_components.index', compact('components'));
@@ -21,7 +27,12 @@ class PayrollComponentController extends Controller
 
     public function create()
     {
-        $companies = DB::table('companies')->pluck('name', 'id');
+        $companiesQuery = Company::query();
+        if (Auth::user()->company_id) {
+            $companiesQuery->where('id', Auth::user()->company_id);
+        }
+        $companies = $companiesQuery->pluck('name', 'id');
+        
         return view('masters.payroll_components.create', compact('companies'));
     }
 
@@ -40,32 +51,43 @@ class PayrollComponentController extends Controller
             'formula' => 'nullable|string',
         ]);
 
-        $now = now();
-        DB::table('payroll_components')->insert(array_merge([
+        if (Auth::user()->company_id && $data['company_id'] != Auth::user()->company_id) {
+            abort(403, 'Unauthorized company selection.');
+        }
+
+        PayrollComponent::create(array_merge([
             'is_taxable' => true,
             'show_in_payslip' => true,
             'sequence' => 0,
-        ], $data, [
-            'created_at' => $now,
-            'updated_at' => $now,
-        ]));
+        ], $data));
 
         return redirect()->route('payroll-components.index')->with('success', 'Komponen payroll ditambahkan.');
     }
 
     public function edit(int $id)
     {
-        $payrollComponent = DB::table('payroll_components')->find($id);
-        abort_unless($payrollComponent, 404);
-        $companies = DB::table('companies')->pluck('name', 'id');
+        $payrollComponent = PayrollComponent::findOrFail($id);
+        
+        if (Auth::user()->company_id && $payrollComponent->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this component.');
+        }
+
+        $companiesQuery = Company::query();
+        if (Auth::user()->company_id) {
+            $companiesQuery->where('id', Auth::user()->company_id);
+        }
+        $companies = $companiesQuery->pluck('name', 'id');
 
         return view('masters.payroll_components.edit', compact('payrollComponent', 'companies'));
     }
 
     public function update(Request $request, int $id)
     {
-        $payrollComponent = DB::table('payroll_components')->find($id);
-        abort_unless($payrollComponent, 404);
+        $payrollComponent = PayrollComponent::findOrFail($id);
+        
+        if (Auth::user()->company_id && $payrollComponent->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this component.');
+        }
 
         $data = $request->validate([
             'company_id' => 'required|integer|exists:companies,id',
@@ -79,20 +101,29 @@ class PayrollComponentController extends Controller
             'sequence' => 'nullable|integer',
             'formula' => 'nullable|string',
         ]);
+        
+        if (Auth::user()->company_id && $data['company_id'] != Auth::user()->company_id) {
+            abort(403, 'Unauthorized company selection.');
+        }
 
         $data['is_taxable'] = $request->boolean('is_taxable');
         $data['show_in_payslip'] = $request->boolean('show_in_payslip');
         $data['sequence'] = $data['sequence'] ?? 0;
-        $data['updated_at'] = now();
 
-        DB::table('payroll_components')->where('id', $id)->update($data);
+        $payrollComponent->update($data);
 
         return redirect()->route('payroll-components.index')->with('success', 'Komponen payroll diperbarui.');
     }
 
     public function destroy(int $id)
     {
-        DB::table('payroll_components')->where('id', $id)->delete();
+        $payrollComponent = PayrollComponent::findOrFail($id);
+        
+        if (Auth::user()->company_id && $payrollComponent->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this component.');
+        }
+
+        $payrollComponent->delete();
         return redirect()->route('payroll-components.index')->with('success', 'Komponen payroll dihapus.');
     }
 }

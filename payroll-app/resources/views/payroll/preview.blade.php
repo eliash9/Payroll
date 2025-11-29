@@ -30,9 +30,9 @@
                             <div class="font-semibold">{{ $row['employee']->full_name }}</div>
                             <div class="text-xs text-slate-500">{{ $row['employee']->employee_code }}</div>
                         </td>
-                        <td class="px-3 py-2">Rp {{ number_format($row['gross'],0,',','.') }}</td>
-                        <td class="px-3 py-2">Rp {{ number_format($row['deduction'],0,',','.') }}</td>
-                        <td class="px-3 py-2 font-semibold">Rp {{ number_format($row['net'],0,',','.') }}</td>
+                        <td class="px-3 py-2 text-right">Rp {{ number_format($row['gross'],0,',','.') }}</td>
+                        <td class="px-3 py-2 text-right">Rp {{ number_format($row['deduction'],0,',','.') }}</td>
+                        <td class="px-3 py-2 font-semibold text-right">Rp {{ number_format($row['net'],0,',','.') }}</td>
                         <td class="px-3 py-2">
                             <table class="text-xs min-w-[320px]">
                                 <thead>

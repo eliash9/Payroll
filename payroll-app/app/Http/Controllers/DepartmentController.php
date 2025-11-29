@@ -2,25 +2,35 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Department;
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class DepartmentController extends Controller
 {
     public function index()
     {
-        $departments = DB::table('departments')
-            ->join('companies', 'companies.id', '=', 'departments.company_id')
-            ->select('departments.*', 'companies.name as company_name')
-            ->orderBy('departments.name')
-            ->paginate(20);
+        $query = Department::query();
+        
+        if (Auth::user()->company_id) {
+            $query->where('company_id', Auth::user()->company_id);
+        }
+
+        $departments = $query->orderBy('name')->paginate(20);
 
         return view('masters.departments.index', compact('departments'));
     }
 
     public function create()
     {
-        $companies = DB::table('companies')->pluck('name', 'id');
+        $companiesQuery = Company::query();
+        if (Auth::user()->company_id) {
+            $companiesQuery->where('id', Auth::user()->company_id);
+        }
+        $companies = $companiesQuery->pluck('name', 'id');
+        
         return view('masters.departments.create', compact('companies'));
     }
 
@@ -32,44 +42,64 @@ class DepartmentController extends Controller
             'code' => 'nullable|string|max:50|unique:departments,code',
         ]);
 
-        $now = now();
-        DB::table('departments')->insert(array_merge($data, [
-            'created_at' => $now,
-            'updated_at' => $now,
-        ]));
+        if (Auth::user()->company_id && $data['company_id'] != Auth::user()->company_id) {
+            abort(403, 'Unauthorized company selection.');
+        }
+
+        Department::create($data);
 
         return redirect()->route('departments.index')->with('success', 'Departemen ditambahkan.');
     }
 
     public function edit(int $id)
     {
-        $department = DB::table('departments')->find($id);
-        abort_unless($department, 404);
-        $companies = DB::table('companies')->pluck('name', 'id');
+        $department = Department::findOrFail($id);
+        
+        if (Auth::user()->company_id && $department->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this department.');
+        }
+
+        $companiesQuery = Company::query();
+        if (Auth::user()->company_id) {
+            $companiesQuery->where('id', Auth::user()->company_id);
+        }
+        $companies = $companiesQuery->pluck('name', 'id');
 
         return view('masters.departments.edit', compact('department', 'companies'));
     }
 
     public function update(Request $request, int $id)
     {
-        $department = DB::table('departments')->find($id);
-        abort_unless($department, 404);
+        $department = Department::findOrFail($id);
+        
+        if (Auth::user()->company_id && $department->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this department.');
+        }
 
         $data = $request->validate([
             'company_id' => 'required|integer|exists:companies,id',
             'name' => 'required|string|max:191',
             'code' => 'nullable|string|max:50|unique:departments,code,' . $id,
         ]);
+        
+        if (Auth::user()->company_id && $data['company_id'] != Auth::user()->company_id) {
+            abort(403, 'Unauthorized company selection.');
+        }
 
-        $data['updated_at'] = now();
-        DB::table('departments')->where('id', $id)->update($data);
+        $department->update($data);
 
         return redirect()->route('departments.index')->with('success', 'Departemen diperbarui.');
     }
 
     public function destroy(int $id)
     {
-        DB::table('departments')->where('id', $id)->delete();
+        $department = Department::findOrFail($id);
+        
+        if (Auth::user()->company_id && $department->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this department.');
+        }
+
+        $department->delete();
         return redirect()->route('departments.index')->with('success', 'Departemen dihapus.');
     }
 }

@@ -39,11 +39,11 @@
                     </div>
                     <div>
                         <label class="text-sm">Nominal Pokok</label>
-                        <input name="principal_amount" type="number" step="0.01" class="w-full border rounded px-3 py-2" required value="{{ old('principal_amount') }}">
+                        <input name="principal_amount" type="number" step="0.01" class="w-full border rounded px-3 py-2 text-right" required value="{{ old('principal_amount') }}">
                     </div>
                     <div>
                         <label class="text-sm">Cicilan per Periode</label>
-                        <input name="installment_amount" type="number" step="0.01" class="w-full border rounded px-3 py-2" required value="{{ old('installment_amount') }}">
+                        <input name="installment_amount" type="number" step="0.01" class="w-full border rounded px-3 py-2 text-right" required value="{{ old('installment_amount') }}">
                     </div>
                     <div>
                         <label class="text-sm">Tenor (jumlah periode)</label>

@@ -23,11 +23,11 @@
                     </div>
                     <div>
                         <label class="text-sm">Range Min</label>
-                        <input name="range_min" type="number" min="0" class="w-full border rounded px-3 py-2" required value="{{ old('range_min') }}">
+                        <input name="range_min" type="number" min="0" class="w-full border rounded px-3 py-2 text-right" required value="{{ old('range_min') }}">
                     </div>
                     <div>
                         <label class="text-sm">Range Max</label>
-                        <input name="range_max" type="number" min="0" class="w-full border rounded px-3 py-2" value="{{ old('range_max') }}">
+                        <input name="range_max" type="number" min="0" class="w-full border rounded px-3 py-2 text-right" value="{{ old('range_max') }}">
                     </div>
                     <div>
                         <label class="text-sm">Tarif %</label>

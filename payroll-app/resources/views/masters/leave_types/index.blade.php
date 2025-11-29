@@ -18,7 +18,6 @@
                 <tr class="bg-slate-100 text-left">
                     <th class="px-3 py-2">Kode</th>
                     <th class="px-3 py-2">Nama</th>
-                    <th class="px-3 py-2">Perusahaan</th>
                     <th class="px-3 py-2">Berbayar</th>
                     <th class="px-3 py-2">Potong Kuota</th>
                     <th class="px-3 py-2">Quota Default</th>
@@ -30,7 +29,6 @@
                     <tr class="border-t">
                         <td class="px-3 py-2">{{ $type->code }}</td>
                         <td class="px-3 py-2">{{ $type->name }}</td>
-                        <td class="px-3 py-2">{{ $type->company_name }}</td>
                         <td class="px-3 py-2">{{ $type->is_paid ? 'Ya' : 'Tidak' }}</td>
                         <td class="px-3 py-2">{{ $type->is_annual_quota ? 'Ya' : 'Tidak' }}</td>
                         <td class="px-3 py-2">{{ $type->default_quota_days }}</td>

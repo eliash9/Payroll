@@ -57,8 +57,8 @@
                         <td class="px-3 py-2">{{ $emp->branch_name }}</td>
                         <td class="px-3 py-2">{{ ucfirst($emp->status) }}</td>
                         <td class="px-3 py-2">{{ $emp->is_volunteer ? 'Ya' : 'Tidak' }}</td>
-                        <td class="px-3 py-2">Rp {{ number_format($emp->basic_salary,0,',','.') }}</td>
-                        <td class="px-3 py-2">Rp {{ number_format($emp->hourly_rate,0,',','.') }}</td>
+                        <td class="px-3 py-2 text-right">Rp {{ number_format($emp->basic_salary,0,',','.') }}</td>
+                        <td class="px-3 py-2 text-right">Rp {{ number_format($emp->hourly_rate,0,',','.') }}</td>
                         <td class="px-3 py-2">{{ $emp->commission_rate }}</td>
                         <td class="px-3 py-2 space-x-2">
                             <a class="text-blue-600 underline" href="{{ route('employees.edit', $emp->id) }}">Edit</a>

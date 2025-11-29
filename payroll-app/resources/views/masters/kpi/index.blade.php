@@ -22,7 +22,6 @@
                     <th class="px-3 py-2">Period</th>
                     <th class="px-3 py-2">Kategori</th>
                     <th class="px-3 py-2">Target Default</th>
-                    <th class="px-3 py-2">Perusahaan</th>
                     <th class="px-3 py-2">Aksi</th>
                 </tr>
                 </thead>
@@ -35,7 +34,6 @@
                         <td class="px-3 py-2">{{ ucfirst($kpi->period_type) }}</td>
                         <td class="px-3 py-2">{{ ucfirst($kpi->category) }}</td>
                         <td class="px-3 py-2">{{ $kpi->target_default }}</td>
-                        <td class="px-3 py-2">{{ $kpi->company_name }}</td>
                         <td class="px-3 py-2 space-x-2">
                             <a class="text-blue-600 underline" href="{{ route('kpi.edit', $kpi->id) }}">Edit</a>
                             <form method="post" action="{{ route('kpi.destroy', $kpi->id) }}" class="inline">

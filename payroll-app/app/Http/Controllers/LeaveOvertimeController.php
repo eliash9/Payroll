@@ -2,27 +2,48 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Employee;
+use App\Models\LeaveType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class LeaveOvertimeController extends Controller
 {
     public function index()
     {
-        $employees = DB::table('employees')->orderBy('full_name')->get(['id', 'full_name', 'employee_code']);
-        $leaveTypes = DB::table('leave_types')->orderBy('name')->get(['id', 'name']);
+        $employeesQuery = Employee::query();
+        $leaveTypesQuery = LeaveType::query();
+        
+        if (Auth::user()->company_id) {
+            $employeesQuery->where('company_id', Auth::user()->company_id);
+            $leaveTypesQuery->where('company_id', Auth::user()->company_id);
+        }
 
-        $leaves = DB::table('leave_requests as l')
+        $employees = $employeesQuery->orderBy('full_name')->get(['id', 'full_name', 'employee_code']);
+        $leaveTypes = $leaveTypesQuery->orderBy('name')->get(['id', 'name']);
+
+        $leavesQuery = DB::table('leave_requests as l')
             ->join('employees as e', 'e.id', '=', 'l.employee_id')
-            ->select('l.*', 'e.full_name', 'e.employee_code')
-            ->orderByDesc('l.created_at')
+            ->select('l.*', 'e.full_name', 'e.employee_code');
+            
+        if (Auth::user()->company_id) {
+            $leavesQuery->where('e.company_id', Auth::user()->company_id);
+        }
+        
+        $leaves = $leavesQuery->orderByDesc('l.created_at')
             ->limit(50)
             ->get();
 
-        $overtimes = DB::table('overtime_requests as o')
+        $overtimesQuery = DB::table('overtime_requests as o')
             ->join('employees as e', 'e.id', '=', 'o.employee_id')
-            ->select('o.*', 'e.full_name', 'e.employee_code')
-            ->orderByDesc('o.created_at')
+            ->select('o.*', 'e.full_name', 'e.employee_code');
+            
+        if (Auth::user()->company_id) {
+            $overtimesQuery->where('e.company_id', Auth::user()->company_id);
+        }
+        
+        $overtimes = $overtimesQuery->orderByDesc('o.created_at')
             ->limit(50)
             ->get();
 
@@ -40,6 +61,18 @@ class LeaveOvertimeController extends Controller
             'status' => 'required|in:pending,approved,rejected',
             'reason' => 'nullable|string',
         ]);
+
+        // Verify employee and leave type belong to company
+        $employee = Employee::findOrFail($data['employee_id']);
+        if (Auth::user()->company_id && $employee->company_id != Auth::user()->company_id) {
+            abort(403, 'Invalid employee selected.');
+        }
+        
+        $leaveType = LeaveType::findOrFail($data['leave_type_id']);
+        if (Auth::user()->company_id && $leaveType->company_id != Auth::user()->company_id) {
+            abort(403, 'Invalid leave type selected.');
+        }
+
         $data['created_at'] = $data['updated_at'] = now();
         DB::table('leave_requests')->insert($data);
         $this->syncAttendanceForLeave($data['employee_id'], $data['start_date'], $data['end_date'], $data['status']);
@@ -57,6 +90,13 @@ class LeaveOvertimeController extends Controller
             'status' => 'required|in:pending,approved,rejected',
             'reason' => 'nullable|string',
         ]);
+        
+        // Verify employee belongs to company
+        $employee = Employee::findOrFail($data['employee_id']);
+        if (Auth::user()->company_id && $employee->company_id != Auth::user()->company_id) {
+            abort(403, 'Invalid employee selected.');
+        }
+
         $data['start_time'] = "{$data['work_date']} {$data['start_time']}";
         $data['end_time'] = "{$data['work_date']} {$data['end_time']}";
         $data['created_at'] = $data['updated_at'] = now();
@@ -69,14 +109,23 @@ class LeaveOvertimeController extends Controller
         $data = $request->validate([
             'status' => 'required|in:pending,approved,rejected,cancelled',
         ]);
+        
         $leave = DB::table('leave_requests')->find($id);
+        if (!$leave) abort(404);
+        
+        // Verify access
+        $employee = Employee::find($leave->employee_id);
+        if (Auth::user()->company_id && $employee->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this request.');
+        }
+
         DB::table('leave_requests')->where('id', $id)->update([
             'status' => $data['status'],
             'updated_at' => now(),
         ]);
-        if ($leave) {
-            $this->syncAttendanceForLeave($leave->employee_id, $leave->start_date, $leave->end_date, $data['status']);
-        }
+        
+        $this->syncAttendanceForLeave($leave->employee_id, $leave->start_date, $leave->end_date, $data['status']);
+        
         return back()->with('success', 'Status cuti diperbarui');
     }
 
@@ -85,6 +134,16 @@ class LeaveOvertimeController extends Controller
         $data = $request->validate([
             'status' => 'required|in:pending,approved,rejected,cancelled',
         ]);
+        
+        $overtime = DB::table('overtime_requests')->find($id);
+        if (!$overtime) abort(404);
+
+        // Verify access
+        $employee = Employee::find($overtime->employee_id);
+        if (Auth::user()->company_id && $employee->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this request.');
+        }
+
         DB::table('overtime_requests')->where('id', $id)->update([
             'status' => $data['status'],
             'updated_at' => now(),

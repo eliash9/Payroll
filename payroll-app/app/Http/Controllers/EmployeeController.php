@@ -2,8 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Employee;
+use App\Models\Company;
+use App\Models\Branch;
+use App\Models\Department;
+use App\Models\Position;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class EmployeeController extends Controller
 {
@@ -14,30 +20,62 @@ class EmployeeController extends Controller
         $sortDir = request('dir', 'asc') === 'desc' ? 'desc' : 'asc';
         $allowedSort = ['full_name', 'employee_code', 'branch_name', 'is_volunteer'];
 
-        $employees = DB::table('employees')
-            ->leftJoin('branches', 'branches.id', '=', 'employees.branch_id')
-            ->select('employees.*', 'branches.name as branch_name')
-            ->when($q, function ($query) use ($q) {
-                $query->where(function ($sub) use ($q) {
-                    $sub->where('employees.full_name', 'like', "%{$q}%")
-                        ->orWhere('employees.employee_code', 'like', "%{$q}%");
-                });
-            })
-            ->orderBy(in_array($sort, $allowedSort) ? $sort : 'full_name', $sortDir)
-            ->paginate(20)
-            ->withQueryString();
+        $query = Employee::with('branch');
 
-        $companies = DB::table('companies')->pluck('name', 'id');
+        if ($q) {
+            $query->where(function ($sub) use ($q) {
+                $sub->where('full_name', 'like', "%{$q}%")
+                    ->orWhere('employee_code', 'like', "%{$q}%");
+            });
+        }
+
+        if ($sort === 'branch_name') {
+            $query->leftJoin('branches', 'branches.id', '=', 'employees.branch_id')
+                  ->orderBy('branches.name', $sortDir)
+                  ->select('employees.*', 'branches.name as branch_name');
+        } elseif (in_array($sort, $allowedSort)) {
+            $query->leftJoin('branches', 'branches.id', '=', 'employees.branch_id')
+                  ->select('employees.*', 'branches.name as branch_name')
+                  ->orderBy($sort, $sortDir);
+        } else {
+            $query->leftJoin('branches', 'branches.id', '=', 'employees.branch_id')
+                  ->select('employees.*', 'branches.name as branch_name')
+                  ->orderBy('full_name', $sortDir);
+        }
+
+        $employees = $query->paginate(20)->withQueryString();
+
+        // Scope companies list
+        $companiesQuery = Company::query();
+        if (Auth::user()->company_id) {
+            $companiesQuery->where('id', Auth::user()->company_id);
+        }
+        $companies = $companiesQuery->pluck('name', 'id');
 
         return view('employees.index', compact('employees', 'q', 'sort', 'sortDir', 'companies'));
     }
 
     public function create()
     {
-        $companies = DB::table('companies')->pluck('name', 'id');
-        $branches = collect(); // loaded via ajax or dependent selection
+        $companiesQuery = Company::query();
+        if (Auth::user()->company_id) {
+            $companiesQuery->where('id', Auth::user()->company_id);
+        }
+        $companies = $companiesQuery->pluck('name', 'id');
+
+        $branches = collect(); 
         $departments = collect();
         $positions = collect();
+        
+        // If user has company_id, pre-load their branches/depts/positions?
+        // For now, keep it empty as per original, assuming dynamic loading or user selects company first.
+        // But if there is only 1 company, we might want to load them.
+        if (Auth::user()->company_id) {
+            $branches = Branch::where('company_id', Auth::user()->company_id)->pluck('name', 'id');
+            $departments = Department::where('company_id', Auth::user()->company_id)->pluck('name', 'id');
+            $positions = Position::where('company_id', Auth::user()->company_id)->pluck('name', 'id');
+        }
+
         return view('employees.create', compact('companies', 'branches', 'departments', 'positions'));
     }
 
@@ -59,30 +97,43 @@ class EmployeeController extends Controller
             'status' => 'required|in:active,inactive,suspended,terminated',
         ]);
 
-        $data = array_merge([
-            'created_at' => now(),
-            'updated_at' => now(),
-        ], $data);
+        // Enforce company scope for non-super-admins
+        if (Auth::user()->company_id && $data['company_id'] != Auth::user()->company_id) {
+             abort(403, 'You cannot create employees for another company.');
+        }
 
         $data['is_volunteer'] = $request->boolean('is_volunteer');
-
-        DB::table('employees')->insert($data);
+        $data['basic_salary'] = $data['basic_salary'] ?? 0;
+        $data['hourly_rate'] = $data['hourly_rate'] ?? 0;
+        $data['commission_rate'] = $data['commission_rate'] ?? 0;
+        
+        Employee::create($data);
 
         return redirect()->route('employees.index')->with('success', 'Employee created');
     }
 
     public function edit(int $id)
     {
-        $employee = DB::table('employees')->find($id);
-        $companies = DB::table('companies')->pluck('name', 'id');
-        $branches = DB::table('branches')->where('company_id', $employee->company_id)->pluck('name', 'id');
-        $departments = DB::table('departments')->where('company_id', $employee->company_id)->pluck('name', 'id');
-        $positions = DB::table('positions')->where('company_id', $employee->company_id)->pluck('name', 'id');
+        // Employee::find($id) will automatically apply CompanyScope
+        $employee = Employee::findOrFail($id);
+
+        $companiesQuery = Company::query();
+        if (Auth::user()->company_id) {
+            $companiesQuery->where('id', Auth::user()->company_id);
+        }
+        $companies = $companiesQuery->pluck('name', 'id');
+
+        $branches = Branch::where('company_id', $employee->company_id)->pluck('name', 'id');
+        $departments = Department::where('company_id', $employee->company_id)->pluck('name', 'id');
+        $positions = Position::where('company_id', $employee->company_id)->pluck('name', 'id');
+
         return view('employees.edit', compact('employee', 'companies', 'branches', 'departments', 'positions'));
     }
 
     public function update(Request $request, int $id)
     {
+        $employee = Employee::findOrFail($id);
+
         $data = $request->validate([
             'company_id' => 'required|integer|exists:companies,id',
             'employee_code' => 'required|string|max:50|unique:employees,employee_code,' . $id,
@@ -99,16 +150,24 @@ class EmployeeController extends Controller
             'status' => 'required|in:active,inactive,suspended,terminated',
         ]);
 
+        if (Auth::user()->company_id && $data['company_id'] != Auth::user()->company_id) {
+             abort(403, 'You cannot move employees to another company.');
+        }
+
         $data['is_volunteer'] = $request->boolean('is_volunteer');
-        $data['updated_at'] = now();
-        DB::table('employees')->where('id', $id)->update($data);
+        $data['basic_salary'] = $data['basic_salary'] ?? 0;
+        $data['hourly_rate'] = $data['hourly_rate'] ?? 0;
+        $data['commission_rate'] = $data['commission_rate'] ?? 0;
+        
+        $employee->update($data);
 
         return redirect()->route('employees.index')->with('success', 'Employee updated');
     }
 
     public function destroy(int $id)
     {
-        DB::table('employees')->where('id', $id)->delete();
+        $employee = Employee::findOrFail($id);
+        $employee->delete();
         return redirect()->route('employees.index')->with('success', 'Employee deleted');
     }
 }

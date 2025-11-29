@@ -2,15 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\EmployeeLoan;
+use App\Models\EmployeeLoanSchedule;
+use App\Models\Employee;
+use App\Models\PayrollPeriod;
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class EmployeeLoanController extends Controller
 {
     public function index()
     {
-        $loans = DB::table('employee_loans as el')
+        $query = DB::table('employee_loans as el')
             ->join('employees as e', 'e.id', '=', 'el.employee_id')
             ->join('companies as c', 'c.id', '=', 'el.company_id')
             ->leftJoin('employee_loan_schedules as els', function ($join) {
@@ -23,8 +29,13 @@ class EmployeeLoanController extends Controller
                 'c.name as company_name',
                 DB::raw('COUNT(els.id) as unpaid_installments')
             )
-            ->groupBy('el.id', 'e.full_name', 'e.employee_code', 'c.name')
-            ->orderByDesc('el.created_at')
+            ->groupBy('el.id', 'e.full_name', 'e.employee_code', 'c.name');
+
+        if (Auth::user()->company_id) {
+            $query->where('el.company_id', Auth::user()->company_id);
+        }
+
+        $loans = $query->orderByDesc('el.created_at')
             ->paginate(20)
             ->withQueryString();
 
@@ -33,16 +44,29 @@ class EmployeeLoanController extends Controller
 
     public function create()
     {
-        $companies = DB::table('companies')->orderBy('name')->pluck('name', 'id');
+        $companiesQuery = Company::query();
+        if (Auth::user()->company_id) {
+            $companiesQuery->where('id', Auth::user()->company_id);
+        }
+        $companies = $companiesQuery->orderBy('name')->pluck('name', 'id');
+        
         $companyId = old('company_id') ?? request()->integer('company_id');
-        $employees = DB::table('employees')
-            ->when($companyId, fn($q) => $q->where('company_id', $companyId))
-            ->orderBy('full_name')
-            ->get(['id', 'full_name', 'employee_code', 'company_id']);
-        $periods = DB::table('payroll_periods')
-            ->when($companyId, fn($q) => $q->where('company_id', $companyId))
-            ->orderByDesc('start_date')
-            ->get(['id', 'code', 'name', 'company_id']);
+        if (Auth::user()->company_id) {
+            $companyId = Auth::user()->company_id;
+        }
+
+        $employees = collect();
+        $periods = collect();
+
+        if ($companyId) {
+             $employees = Employee::where('company_id', $companyId)
+                ->orderBy('full_name')
+                ->get(['id', 'full_name', 'employee_code', 'company_id']);
+                
+             $periods = PayrollPeriod::where('company_id', $companyId)
+                ->orderByDesc('start_date')
+                ->get(['id', 'code', 'name', 'company_id']);
+        }
 
         return view('transactions.employee_loans.create', compact('companies', 'employees', 'periods', 'companyId'));
     }
@@ -59,19 +83,22 @@ class EmployeeLoanController extends Controller
             'start_period_id' => ['required', 'integer', 'exists:payroll_periods,id'],
         ]);
 
+        if (Auth::user()->company_id && $data['company_id'] != Auth::user()->company_id) {
+            abort(403, 'Unauthorized company selection.');
+        }
+
         // Validasi employee-company konsisten
-        $empCompany = DB::table('employees')->where('id', $data['employee_id'])->value('company_id');
-        if ($empCompany !== (int) $data['company_id']) {
+        $employee = Employee::findOrFail($data['employee_id']);
+        if ($employee->company_id !== (int) $data['company_id']) {
             return back()->with('error', 'Employee tidak sesuai company')->withInput();
         }
 
-        $startPeriod = DB::table('payroll_periods')->where('id', $data['start_period_id'])->where('company_id', $data['company_id'])->first();
+        $startPeriod = PayrollPeriod::where('id', $data['start_period_id'])->where('company_id', $data['company_id'])->first();
         if (!$startPeriod) {
             return back()->with('error', 'Periode mulai tidak ditemukan untuk company tersebut')->withInput();
         }
 
-        $periods = DB::table('payroll_periods')
-            ->where('company_id', $data['company_id'])
+        $periods = PayrollPeriod::where('company_id', $data['company_id'])
             ->where('start_date', '>=', $startPeriod->start_date)
             ->orderBy('start_date')
             ->limit($data['tenor_months'])
@@ -83,6 +110,9 @@ class EmployeeLoanController extends Controller
 
         DB::transaction(function () use ($data, $periods) {
             $now = now();
+            // Assuming EmployeeLoan model exists or using DB if simpler for transaction
+            // Let's use DB for consistency with original logic but scoped
+            
             $loanId = DB::table('employee_loans')->insertGetId([
                 'employee_id' => $data['employee_id'],
                 'company_id' => $data['company_id'],
@@ -122,14 +152,22 @@ class EmployeeLoanController extends Controller
     {
         $loan = DB::table('employee_loans')->find($id);
         abort_unless($loan, 404);
+        
+        if (Auth::user()->company_id && $loan->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this loan.');
+        }
 
-        $companies = DB::table('companies')->orderBy('name')->pluck('name', 'id');
-        $employees = DB::table('employees')
-            ->where('company_id', $loan->company_id)
+        $companiesQuery = Company::query();
+        if (Auth::user()->company_id) {
+            $companiesQuery->where('id', Auth::user()->company_id);
+        }
+        $companies = $companiesQuery->orderBy('name')->pluck('name', 'id');
+
+        $employees = Employee::where('company_id', $loan->company_id)
             ->orderBy('full_name')
             ->get(['id', 'full_name', 'employee_code', 'company_id']);
-        $periods = DB::table('payroll_periods')
-            ->where('company_id', $loan->company_id)
+            
+        $periods = PayrollPeriod::where('company_id', $loan->company_id)
             ->orderByDesc('start_date')
             ->get(['id', 'code', 'name', 'company_id']);
 
@@ -140,6 +178,10 @@ class EmployeeLoanController extends Controller
     {
         $loan = DB::table('employee_loans')->find($id);
         abort_unless($loan, 404);
+        
+        if (Auth::user()->company_id && $loan->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this loan.');
+        }
 
         $data = $request->validate([
             'loan_number' => ['required', 'string', 'max:50', Rule::unique('employee_loans', 'loan_number')->ignore($id)],
@@ -155,6 +197,11 @@ class EmployeeLoanController extends Controller
 
     public function destroy(int $id)
     {
+        $loan = DB::table('employee_loans')->find($id);
+        if ($loan && Auth::user()->company_id && $loan->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this loan.');
+        }
+
         DB::table('employee_loan_schedules')->where('employee_loan_id', $id)->delete();
         DB::table('employee_loans')->where('id', $id)->delete();
 

@@ -51,11 +51,11 @@
                 <div class="grid md:grid-cols-3 gap-4">
                     <div>
                         <label class="text-sm">Basic Salary</label>
-                        <input name="basic_salary" type="number" step="0.01" class="w-full border rounded px-3 py-2">
+                        <input name="basic_salary" type="number" step="0.01" class="w-full border rounded px-3 py-2 text-right" value="{{ old('basic_salary') }}">
                     </div>
                     <div>
                         <label class="text-sm">Hourly Rate</label>
-                        <input name="hourly_rate" type="number" step="0.01" class="w-full border rounded px-3 py-2">
+                        <input name="hourly_rate" type="number" step="0.01" class="w-full border rounded px-3 py-2 text-right" value="{{ old('hourly_rate') }}">
                     </div>
                     <div>
                         <label class="text-sm">Commission %</label>

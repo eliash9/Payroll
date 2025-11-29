@@ -49,7 +49,7 @@
                                 <div class="text-xs text-slate-500">{{ $claim->employee->employee_code }}</div>
                             </td>
                             <td class="px-3 py-2">{{ $claim->description }}</td>
-                            <td class="px-3 py-2">Rp {{ number_format($claim->amount,0,',','.') }}</td>
+                            <td class="px-3 py-2 text-right">Rp {{ number_format($claim->amount,0,',','.') }}</td>
                             <td class="px-3 py-2">
                                 @if($claim->receipt_url)
                                     <a href="{{ $claim->receipt_url }}" target="_blank" class="text-blue-600 underline">Lihat</a>

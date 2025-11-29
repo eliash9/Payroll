@@ -27,19 +27,19 @@
                     </div>
                     <div>
                         <label class="text-sm">Persen Perusahaan</label>
-                        <input name="employer_rate" type="number" step="0.01" min="0" class="w-full border rounded px-3 py-2" required value="{{ old('employer_rate', $bpjsRate->employer_rate) }}">
+                        <input name="employer_rate" type="number" step="0.01" min="0" class="w-full border rounded px-3 py-2 text-right" required value="{{ old('employer_rate', $bpjsRate->employer_rate) }}">
                     </div>
                     <div>
                         <label class="text-sm">Persen Karyawan</label>
-                        <input name="employee_rate" type="number" step="0.01" min="0" class="w-full border rounded px-3 py-2" required value="{{ old('employee_rate', $bpjsRate->employee_rate) }}">
+                        <input name="employee_rate" type="number" step="0.01" min="0" class="w-full border rounded px-3 py-2 text-right" required value="{{ old('employee_rate', $bpjsRate->employee_rate) }}">
                     </div>
                     <div>
                         <label class="text-sm">Cap Min</label>
-                        <input name="salary_cap_min" type="number" step="0.01" min="0" class="w-full border rounded px-3 py-2" value="{{ old('salary_cap_min', $bpjsRate->salary_cap_min) }}">
+                        <input name="salary_cap_min" type="number" step="0.01" min="0" class="w-full border rounded px-3 py-2 text-right" value="{{ old('salary_cap_min', $bpjsRate->salary_cap_min) }}">
                     </div>
                     <div>
                         <label class="text-sm">Cap Max</label>
-                        <input name="salary_cap_max" type="number" step="0.01" min="0" class="w-full border rounded px-3 py-2" value="{{ old('salary_cap_max', $bpjsRate->salary_cap_max) }}">
+                        <input name="salary_cap_max" type="number" step="0.01" min="0" class="w-full border rounded px-3 py-2 text-right" value="{{ old('salary_cap_max', $bpjsRate->salary_cap_max) }}">
                     </div>
                     <div>
                         <label class="text-sm">Berlaku Dari</label>

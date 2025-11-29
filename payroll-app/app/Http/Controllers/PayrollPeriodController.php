@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PayrollPeriod;
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use App\Services\VolunteerPayrollService;
 use App\Services\RegularPayrollService;
 use RuntimeException;
@@ -15,50 +18,88 @@ class PayrollPeriodController extends Controller
         $status = request('status');
         $q = request('q');
         $companyId = request('company_id');
+        
+        // Enforce company scope
+        if (Auth::user()->company_id) {
+            $companyId = Auth::user()->company_id;
+        }
 
-        $periods = DB::table('payroll_periods')
+        $query = PayrollPeriod::query()
             ->select('payroll_periods.*')
             ->selectSub('select count(*) from payroll_headers where payroll_headers.payroll_period_id = payroll_periods.id', 'slip_count')
-            ->selectSub('select sum(net_income) from payroll_headers where payroll_headers.payroll_period_id = payroll_periods.id', 'net_total')
-            ->when($companyId, fn($query) => $query->where('company_id', $companyId))
-            ->when($status, fn($query) => $query->where('status', $status))
-            ->when($q, fn($query) => $query->where(function ($sub) use ($q) {
+            ->selectSub('select sum(net_income) from payroll_headers where payroll_headers.payroll_period_id = payroll_periods.id', 'net_total');
+
+        if ($companyId) {
+            $query->where('company_id', $companyId);
+        }
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        if ($q) {
+            $query->where(function ($sub) use ($q) {
                 $sub->where('code', 'like', "%{$q}%")->orWhere('name', 'like', "%{$q}%");
-            }))
-            ->orderByDesc('start_date')
+            });
+        }
+
+        $periods = $query->orderByDesc('start_date')
             ->paginate(20)
             ->withQueryString();
 
-        $companies = DB::table('companies')->pluck('name', 'id');
+        $companiesQuery = Company::query();
+        if (Auth::user()->company_id) {
+            $companiesQuery->where('id', Auth::user()->company_id);
+        }
+        $companies = $companiesQuery->pluck('name', 'id');
 
         return view('payroll.index', compact('periods', 'companies', 'companyId'));
     }
 
     public function generateVolunteer(int $id, VolunteerPayrollService $service)
     {
+        $period = PayrollPeriod::findOrFail($id);
+        if (Auth::user()->company_id && $period->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this period.');
+        }
+
         $service->generateForPeriod($id);
-        DB::table('payroll_periods')->where('id', $id)->update([
+        
+        $period->update([
             'status' => 'calculated',
             'locked_at' => now(),
             'updated_at' => now(),
         ]);
+        
         return back()->with('success', 'Payroll relawan digenerate');
     }
 
     public function generateRegular(int $id, RegularPayrollService $service)
     {
+        $period = PayrollPeriod::findOrFail($id);
+        if (Auth::user()->company_id && $period->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this period.');
+        }
+
         $service->generateForPeriod($id);
-        DB::table('payroll_periods')->where('id', $id)->update([
+        
+        $period->update([
             'status' => 'calculated',
             'locked_at' => now(),
             'updated_at' => now(),
         ]);
+        
         return back()->with('success', 'Payroll reguler digenerate');
     }
 
     public function approve(int $id)
     {
-        DB::table('payroll_periods')->where('id', $id)->update([
+        $period = PayrollPeriod::findOrFail($id);
+        if (Auth::user()->company_id && $period->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this period.');
+        }
+
+        $period->update([
             'status' => 'approved',
             'locked_at' => now(),
             'updated_at' => now(),
@@ -69,7 +110,11 @@ class PayrollPeriodController extends Controller
 
     public function previewRegular(int $id, RegularPayrollService $service)
     {
-        $period = DB::table('payroll_periods')->find($id);
+        $period = PayrollPeriod::findOrFail($id);
+        if (Auth::user()->company_id && $period->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this period.');
+        }
+
         $data = $service->simulateForPeriod($id);
         return view('payroll.preview', [
             'period' => $period,
@@ -80,7 +125,11 @@ class PayrollPeriodController extends Controller
 
     public function previewVolunteer(int $id, VolunteerPayrollService $service)
     {
-        $period = DB::table('payroll_periods')->find($id);
+        $period = PayrollPeriod::findOrFail($id);
+        if (Auth::user()->company_id && $period->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this period.');
+        }
+
         $data = $service->simulateForPeriod($id);
         return view('payroll.preview', [
             'period' => $period,
@@ -91,7 +140,12 @@ class PayrollPeriodController extends Controller
 
     public function create()
     {
-        $companies = DB::table('companies')->pluck('name', 'id');
+        $companiesQuery = Company::query();
+        if (Auth::user()->company_id) {
+            $companiesQuery->where('id', Auth::user()->company_id);
+        }
+        $companies = $companiesQuery->pluck('name', 'id');
+        
         return view('payroll.create', compact('companies'));
     }
 
@@ -105,7 +159,11 @@ class PayrollPeriodController extends Controller
             'end_date' => 'required|date|after_or_equal:start_date',
         ]);
 
-        DB::table('payroll_periods')->insert(array_merge($data, [
+        if (Auth::user()->company_id && $data['company_id'] != Auth::user()->company_id) {
+            abort(403, 'Unauthorized company selection.');
+        }
+
+        PayrollPeriod::create(array_merge($data, [
             'status' => 'draft',
             'created_at' => now(),
             'updated_at' => now(),
@@ -116,16 +174,16 @@ class PayrollPeriodController extends Controller
 
     public function destroy(int $id)
     {
-        $period = DB::table('payroll_periods')->find($id);
-        if (!$period) {
-            return back()->with('error', 'Periode tidak ditemukan.');
+        $period = PayrollPeriod::findOrFail($id);
+        if (Auth::user()->company_id && $period->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this period.');
         }
 
         if (in_array($period->status, ['approved', 'closed'])) {
             return back()->with('error', 'Periode sudah disetujui/ditutup, tidak bisa dihapus.');
         }
 
-        DB::table('payroll_periods')->where('id', $id)->delete();
+        $period->delete();
 
         return redirect()->route('payroll.periods.index')->with('success', 'Periode payroll dibatalkan/dihapus.');
     }

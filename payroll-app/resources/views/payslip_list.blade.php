@@ -64,8 +64,8 @@
                         <tr class="border-t">
                             <td class="px-3 py-2">{{ $h->full_name }}</td>
                             <td class="px-3 py-2">{{ $h->employee_code }}</td>
-                            <td class="px-3 py-2">Rp {{ number_format($h->net_income,0,',','.') }}</td>
-                            <td class="px-3 py-2">Rp {{ number_format($h->gross_income,0,',','.') }}</td>
+                            <td class="px-3 py-2 text-right">Rp {{ number_format($h->net_income,0,',','.') }}</td>
+                            <td class="px-3 py-2 text-right">Rp {{ number_format($h->gross_income,0,',','.') }}</td>
                             <td class="px-3 py-2">{{ $h->is_volunteer ? 'Ya' : 'Tidak' }}</td>
                             <td class="px-3 py-2">
                                 <a class="text-blue-600 underline" href="/payslip/{{ $h->payroll_period_id }}/{{ $h->employee_id }}">Lihat Slip</a>

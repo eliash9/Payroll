@@ -2,8 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Employee;
+use App\Models\PayrollHeader;
+use App\Models\PayrollPeriod;
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use RuntimeException;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -20,9 +25,14 @@ class PayslipController extends Controller
             throw new RuntimeException('Slip tidak ditemukan. Pastikan payroll sudah digenerate.');
         }
 
-        $period = DB::table('payroll_periods')->find($periodId);
-        $employee = DB::table('employees')->find($employeeId);
+        // Verify access
+        $employee = Employee::findOrFail($employeeId);
+        if (Auth::user()->company_id && $employee->company_id != Auth::user()->company_id) {
+             abort(403, 'Unauthorized access to this payslip.');
+        }
 
+        $period = DB::table('payroll_periods')->find($periodId);
+        
         $details = DB::table('payroll_details as pd')
             ->join('payroll_components as pc', 'pc.id', '=', 'pd.payroll_component_id')
             ->select('pc.name', 'pc.type', 'pc.code', 'pd.amount', 'pd.quantity')
@@ -53,8 +63,18 @@ class PayslipController extends Controller
      */
     public function index(\Illuminate\Http\Request $request)
     {
-        $companies = DB::table('companies')->orderBy('name')->pluck('name', 'id');
-        $companyId = $request->input('company_id') ?: $companies->keys()->first();
+        $companiesQuery = Company::query();
+        if (Auth::user()->company_id) {
+            $companiesQuery->where('id', Auth::user()->company_id);
+        }
+        $companies = $companiesQuery->orderBy('name')->pluck('name', 'id');
+        
+        $companyId = $request->input('company_id');
+        if (Auth::user()->company_id) {
+            $companyId = Auth::user()->company_id;
+        } elseif (!$companyId) {
+            $companyId = $companies->keys()->first();
+        }
 
         $periodsList = DB::table('payroll_periods')
             ->where('company_id', $companyId)
@@ -87,6 +107,9 @@ class PayslipController extends Controller
             ->join('employees as e', 'e.id', '=', 'ph.employee_id')
             ->select('ph.id', 'ph.payroll_period_id', 'ph.employee_id', 'ph.net_income', 'ph.gross_income', 'e.full_name', 'e.employee_code', 'e.is_volunteer')
             ->where('ph.payroll_period_id', $period->id);
+            
+        // Ensure we only see employees from the selected company (which is already scoped for non-admins)
+        $query->where('e.company_id', $companyId);
 
         if ($request->filled('q')) {
             $q = $request->input('q');

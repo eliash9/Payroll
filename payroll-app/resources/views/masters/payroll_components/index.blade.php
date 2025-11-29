@@ -22,7 +22,6 @@
                     <th class="px-3 py-2">Kategori</th>
                     <th class="px-3 py-2">Metode</th>
                     <th class="px-3 py-2">Seq</th>
-                    <th class="px-3 py-2">Perusahaan</th>
                     <th class="px-3 py-2">Aksi</th>
                 </tr>
                 </thead>
@@ -35,7 +34,6 @@
                         <td class="px-3 py-2">{{ strtoupper($component->category) }}</td>
                         <td class="px-3 py-2">{{ str_replace('_',' ', ucfirst($component->calculation_method)) }}</td>
                         <td class="px-3 py-2">{{ $component->sequence }}</td>
-                        <td class="px-3 py-2">{{ $component->company_name }}</td>
                         <td class="px-3 py-2 space-x-2">
                             <a class="text-blue-600 underline" href="{{ route('payroll-components.edit', $component->id) }}">Edit</a>
                             <form method="post" action="{{ route('payroll-components.destroy', $component->id) }}" class="inline">

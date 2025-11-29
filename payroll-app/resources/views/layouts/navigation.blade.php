@@ -165,6 +165,29 @@
                             </x-dropdown-link>
                         </x-slot>
                     </x-dropdown>
+
+                    <x-dropdown align="left" width="48">
+                        <x-slot name="trigger">
+                            <button class="{{ request()->routeIs('reports.*')
+                                ? 'inline-flex  items-center px-1 py-6 border-b-2 border-indigo-400 text-sm font-medium leading-5 text-gray-900 focus:outline-none focus:border-indigo-700 transition duration-150 ease-in-out'
+                                : 'inline-flex  items-center px-1 py-6 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out' }}">
+                                <span>Laporan</span>
+                                <svg class="ms-1 fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                            </button>
+                        </x-slot>
+
+                        <x-slot name="content">
+                            <x-dropdown-link :href="route('reports.payroll')" class="{{ request()->routeIs('reports.payroll') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
+                                Laporan Gaji
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('reports.attendance')" class="{{ request()->routeIs('reports.attendance') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
+                                Laporan Kehadiran
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('reports.fundraising')" class="{{ request()->routeIs('reports.fundraising') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
+                                Laporan Fundraising
+                            </x-dropdown-link>
+                        </x-slot>
+                    </x-dropdown>
                 </div>
             </div>
 
@@ -302,6 +325,19 @@
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('expense-claims.index')" :active="request()->routeIs('expense-claims.*')" class="ps-6">
                     Klaim Pengeluaran
+                </x-responsive-nav-link>
+            </div>
+
+            <div class="pt-3 border-t border-gray-200 space-y-1">
+                <div class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Laporan</div>
+                <x-responsive-nav-link :href="route('reports.payroll')" :active="request()->routeIs('reports.payroll')" class="ps-6">
+                    Laporan Gaji
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('reports.attendance')" :active="request()->routeIs('reports.attendance')" class="ps-6">
+                    Laporan Kehadiran
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('reports.fundraising')" :active="request()->routeIs('reports.fundraising')" class="ps-6">
+                    Laporan Fundraising
                 </x-responsive-nav-link>
             </div>
         </div>

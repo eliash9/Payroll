@@ -63,6 +63,7 @@
                 <tr class="bg-slate-100 text-left">
                     <th class="px-3 py-2">Tanggal</th>
                     <th class="px-3 py-2">Karyawan</th>
+                    <th class="px-3 py-2">Cabang</th>
                     <th class="px-3 py-2">Check-in</th>
                     <th class="px-3 py-2">Check-out</th>
                     <th class="px-3 py-2">Worked (menit)</th>
@@ -74,6 +75,7 @@
                     <tr class="border-t">
                         <td class="px-3 py-2">{{ $row->work_date }}</td>
                         <td class="px-3 py-2">{{ $row->full_name }} ({{ $row->employee_code }})</td>
+                        <td class="px-3 py-2">{{ $row->branch_name }}</td>
                         <td class="px-3 py-2">{{ $row->check_in }}</td>
                         <td class="px-3 py-2">{{ $row->check_out }}</td>
                         <td class="px-3 py-2">{{ $row->worked_minutes }}</td>

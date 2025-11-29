@@ -2,25 +2,35 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Shift;
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class ShiftController extends Controller
 {
     public function index()
     {
-        $shifts = DB::table('shifts')
-            ->join('companies', 'companies.id', '=', 'shifts.company_id')
-            ->select('shifts.*', 'companies.name as company_name')
-            ->orderBy('shifts.name')
-            ->paginate(20);
+        $query = Shift::query();
+        
+        if (Auth::user()->company_id) {
+            $query->where('company_id', Auth::user()->company_id);
+        }
+
+        $shifts = $query->orderBy('name')->paginate(20);
 
         return view('masters.shifts.index', compact('shifts'));
     }
 
     public function create()
     {
-        $companies = DB::table('companies')->pluck('name', 'id');
+        $companiesQuery = Company::query();
+        if (Auth::user()->company_id) {
+            $companiesQuery->where('id', Auth::user()->company_id);
+        }
+        $companies = $companiesQuery->pluck('name', 'id');
+        
         return view('masters.shifts.create', compact('companies'));
     }
 
@@ -37,32 +47,43 @@ class ShiftController extends Controller
             'is_night_shift' => 'boolean',
         ]);
 
-        $now = now();
-        DB::table('shifts')->insert(array_merge([
+        if (Auth::user()->company_id && $data['company_id'] != Auth::user()->company_id) {
+            abort(403, 'Unauthorized company selection.');
+        }
+
+        Shift::create(array_merge([
             'tolerance_late_minutes' => 0,
             'tolerance_early_leave_minutes' => 0,
             'is_night_shift' => false,
-        ], $data, [
-            'created_at' => $now,
-            'updated_at' => $now,
-        ]));
+        ], $data));
 
         return redirect()->route('shifts.index')->with('success', 'Shift ditambahkan.');
     }
 
     public function edit(int $id)
     {
-        $shift = DB::table('shifts')->find($id);
-        abort_unless($shift, 404);
-        $companies = DB::table('companies')->pluck('name', 'id');
+        $shift = Shift::findOrFail($id);
+        
+        if (Auth::user()->company_id && $shift->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this shift.');
+        }
+
+        $companiesQuery = Company::query();
+        if (Auth::user()->company_id) {
+            $companiesQuery->where('id', Auth::user()->company_id);
+        }
+        $companies = $companiesQuery->pluck('name', 'id');
 
         return view('masters.shifts.edit', compact('shift', 'companies'));
     }
 
     public function update(Request $request, int $id)
     {
-        $shift = DB::table('shifts')->find($id);
-        abort_unless($shift, 404);
+        $shift = Shift::findOrFail($id);
+        
+        if (Auth::user()->company_id && $shift->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this shift.');
+        }
 
         $data = $request->validate([
             'company_id' => 'required|integer|exists:companies,id',
@@ -74,20 +95,29 @@ class ShiftController extends Controller
             'tolerance_early_leave_minutes' => 'nullable|integer|min:0',
             'is_night_shift' => 'boolean',
         ]);
+        
+        if (Auth::user()->company_id && $data['company_id'] != Auth::user()->company_id) {
+            abort(403, 'Unauthorized company selection.');
+        }
 
         $data['tolerance_late_minutes'] = $data['tolerance_late_minutes'] ?? 0;
         $data['tolerance_early_leave_minutes'] = $data['tolerance_early_leave_minutes'] ?? 0;
         $data['is_night_shift'] = $request->boolean('is_night_shift');
-        $data['updated_at'] = now();
 
-        DB::table('shifts')->where('id', $id)->update($data);
+        $shift->update($data);
 
         return redirect()->route('shifts.index')->with('success', 'Shift diperbarui.');
     }
 
     public function destroy(int $id)
     {
-        DB::table('shifts')->where('id', $id)->delete();
+        $shift = Shift::findOrFail($id);
+        
+        if (Auth::user()->company_id && $shift->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this shift.');
+        }
+
+        $shift->delete();
         return redirect()->route('shifts.index')->with('success', 'Shift dihapus.');
     }
 }

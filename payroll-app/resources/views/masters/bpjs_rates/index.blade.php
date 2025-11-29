@@ -22,7 +22,6 @@
                     <th class="px-3 py-2">Cap Min</th>
                     <th class="px-3 py-2">Cap Max</th>
                     <th class="px-3 py-2">Periode</th>
-                    <th class="px-3 py-2">Perusahaan</th>
                     <th class="px-3 py-2">Aksi</th>
                 </tr>
                 </thead>
@@ -35,7 +34,6 @@
                         <td class="px-3 py-2">{{ $rate->salary_cap_min }}</td>
                         <td class="px-3 py-2">{{ $rate->salary_cap_max }}</td>
                         <td class="px-3 py-2">{{ $rate->effective_from }} - {{ $rate->effective_to ?? '...' }}</td>
-                        <td class="px-3 py-2">{{ $rate->company_name }}</td>
                         <td class="px-3 py-2 space-x-2">
                             <a class="text-blue-600 underline" href="{{ route('bpjs-rates.edit', $rate->id) }}">Edit</a>
                             <form method="post" action="{{ route('bpjs-rates.destroy', $rate->id) }}" class="inline">

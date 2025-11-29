@@ -3,16 +3,45 @@
 namespace App\Http\Controllers;
 
 use Carbon\Carbon;
+use App\Models\Branch;
+use App\Models\Employee;
+use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
     /**
-     * Admin dashboard: top fundraiser, ringkasan donasi, jam aktif, estimasi komisi.
+     * Admin dashboard: General stats + Fundraising stats.
      */
     public function admin(Request $request)
     {
+        $companyId = Auth::user()->company_id;
+
+        // --- General Stats ---
+        $totalEmployees = Employee::query();
+        $totalBranches = Branch::query();
+        $totalDepartments = Department::query();
+        $presentToday = DB::table('attendance_summaries')
+            ->join('employees', 'employees.id', '=', 'attendance_summaries.employee_id')
+            ->where('attendance_summaries.work_date', Carbon::today());
+
+        if ($companyId) {
+            $totalEmployees->where('company_id', $companyId);
+            $totalBranches->where('company_id', $companyId);
+            $totalDepartments->where('company_id', $companyId);
+            $presentToday->where('employees.company_id', $companyId);
+        }
+
+        $stats = [
+            'employees' => $totalEmployees->count(),
+            'branches' => $totalBranches->count(),
+            'departments' => $totalDepartments->count(),
+            'present_today' => $presentToday->count(),
+        ];
+
+        // --- Fundraising Stats ---
         $period = $request->input('period', now()->format('Y-m'));
         $campaign = $request->input('campaign');
 
@@ -22,6 +51,10 @@ class DashboardController extends Controller
         $query = DB::table('fundraising_transactions as ft')
             ->join('employees as e', 'e.id', '=', 'ft.fundraiser_id')
             ->whereBetween('ft.date_received', [$start, $end]);
+
+        if ($companyId) {
+            $query->where('e.company_id', $companyId);
+        }
 
         if ($campaign) {
             $query->where('ft.campaign_name', $campaign);
@@ -43,24 +76,34 @@ class DashboardController extends Controller
         $fundraiserIds = $topFundraisers->pluck('fundraiser_id')->all();
         $hours = collect();
         if ($fundraiserIds) {
-            $hours = DB::table('attendance_summaries')
-                ->select('employee_id')
-                ->selectRaw('SUM(worked_minutes)/60 as total_hours')
-                ->whereBetween('work_date', [$start->toDateString(), $end->toDateString()])
-                ->whereIn('employee_id', $fundraiserIds)
-                ->groupBy('employee_id')
+            $hoursQuery = DB::table('attendance_summaries')
+                ->join('employees', 'employees.id', '=', 'attendance_summaries.employee_id')
+                ->select('attendance_summaries.employee_id')
+                ->selectRaw('SUM(attendance_summaries.worked_minutes)/60 as total_hours')
+                ->whereBetween('attendance_summaries.work_date', [$start->toDateString(), $end->toDateString()])
+                ->whereIn('attendance_summaries.employee_id', $fundraiserIds);
+            
+            if ($companyId) {
+                $hoursQuery->where('employees.company_id', $companyId);
+            }
+
+            $hours = $hoursQuery->groupBy('attendance_summaries.employee_id')
                 ->get()
                 ->keyBy('employee_id');
         }
 
         // Estimasi komisi berdasarkan rate & cap per employee
-        $employees = DB::table('employees')
-            ->whereIn('id', $fundraiserIds)
-            ->get()
-            ->keyBy('id');
+        $employeesQuery = DB::table('employees')->whereIn('id', $fundraiserIds);
+        if ($companyId) {
+            $employeesQuery->where('company_id', $companyId);
+        }
+        $employees = $employeesQuery->get()->keyBy('id');
 
         $topFundraisers = $topFundraisers->map(function ($row) use ($hours, $employees) {
             $emp = $employees->get($row->fundraiser_id);
+            // If employee not found (maybe due to scoping issue if data is inconsistent), skip or default
+            if (!$emp) return $row;
+
             $rate = $emp->commission_rate ?? 0;
             $cap = $emp->max_commission_cap ?? null;
             $commission = $row->total_amount * ($rate / 100);
@@ -84,6 +127,7 @@ class DashboardController extends Controller
             'campaign' => $campaign,
             'topFundraisers' => $topFundraisers,
             'totals' => $totals,
+            'stats' => $stats,
             'chartLabels' => $topFundraisers->pluck('full_name'),
             'chartData' => $topFundraisers->pluck('total_amount'),
         ]);
@@ -106,6 +150,11 @@ class DashboardController extends Controller
         $emp = DB::table('employees')->find($employeeId);
         if (!$emp) {
             return redirect()->back()->with('error', 'Relawan tidak ditemukan');
+        }
+        
+        // Ensure volunteer belongs to user's company if user has company_id
+        if (Auth::user()->company_id && $emp->company_id != Auth::user()->company_id) {
+             abort(403, 'Unauthorized access to this volunteer.');
         }
 
         $donation = DB::table('fundraising_transactions')

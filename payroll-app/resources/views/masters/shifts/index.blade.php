@@ -19,7 +19,6 @@
                     <th class="px-3 py-2">Nama</th>
                     <th class="px-3 py-2">Kode</th>
                     <th class="px-3 py-2">Jam</th>
-                    <th class="px-3 py-2">Perusahaan</th>
                     <th class="px-3 py-2">Aksi</th>
                 </tr>
                 </thead>
@@ -29,7 +28,6 @@
                         <td class="px-3 py-2">{{ $shift->name }}</td>
                         <td class="px-3 py-2">{{ $shift->code }}</td>
                         <td class="px-3 py-2">{{ $shift->start_time }} - {{ $shift->end_time }}</td>
-                        <td class="px-3 py-2">{{ $shift->company_name }}</td>
                         <td class="px-3 py-2 space-x-2">
                             <a class="text-blue-600 underline" href="{{ route('shifts.edit', $shift->id) }}">Edit</a>
                             <form method="post" action="{{ route('shifts.destroy', $shift->id) }}" class="inline">

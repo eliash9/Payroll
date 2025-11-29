@@ -38,6 +38,7 @@
                     <tr class="bg-slate-100 text-left">
                         <th class="px-3 py-2">Tanggal</th>
                         <th class="px-3 py-2">Relawan</th>
+                        <th class="px-3 py-2">Cabang</th>
                         <th class="px-3 py-2">Donatur</th>
                         <th class="px-3 py-2">Campaign</th>
                         <th class="px-3 py-2">Kategori</th>
@@ -51,13 +52,14 @@
                         <tr class="border-t">
                             <td class="px-3 py-2">{{ \Illuminate\Support\Carbon::parse($tx->date_received)->format('Y-m-d H:i') }}</td>
                             <td class="px-3 py-2">
-                                <div class="font-semibold">{{ $tx->fundraiser_name }}</div>
-                                <div class="text-xs text-slate-500">{{ $tx->employee_code }}</div>
+                                <div class="font-semibold">{{ $tx->fundraiser->full_name ?? '-' }}</div>
+                                <div class="text-xs text-slate-500">{{ $tx->fundraiser->employee_code ?? '-' }}</div>
                             </td>
+                            <td class="px-3 py-2">{{ $tx->fundraiser->branch->name ?? '-' }}</td>
                             <td class="px-3 py-2">{{ $tx->donor_name }}</td>
                             <td class="px-3 py-2">{{ $tx->campaign_name }}</td>
                             <td class="px-3 py-2">{{ $tx->category }}</td>
-                            <td class="px-3 py-2">Rp {{ number_format($tx->amount,0,',','.') }}</td>
+                            <td class="px-3 py-2 text-right">Rp {{ number_format($tx->amount,0,',','.') }}</td>
                             <td class="px-3 py-2">{{ $tx->source }}</td>
                             <td class="px-3 py-2">
                                 <span class="px-2 py-1 rounded text-xs {{ $tx->status === 'verified' ? 'bg-green-100 text-green-800' : ($tx->status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800') }}">

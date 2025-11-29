@@ -20,7 +20,6 @@
                     <th class="px-3 py-2">Range Min</th>
                     <th class="px-3 py-2">Range Max</th>
                     <th class="px-3 py-2">Tarif %</th>
-                    <th class="px-3 py-2">Perusahaan</th>
                     <th class="px-3 py-2">Aksi</th>
                 </tr>
                 </thead>
@@ -28,10 +27,9 @@
                 @forelse($taxRates as $rate)
                     <tr class="border-t">
                         <td class="px-3 py-2">{{ $rate->year }}</td>
-                        <td class="px-3 py-2">{{ number_format($rate->range_min, 0, ',', '.') }}</td>
-                        <td class="px-3 py-2">{{ $rate->range_max ? number_format($rate->range_max, 0, ',', '.') : 'Tak Terbatas' }}</td>
+                        <td class="px-3 py-2 text-right">{{ number_format($rate->range_min, 0, ',', '.') }}</td>
+                        <td class="px-3 py-2 text-right">{{ $rate->range_max ? number_format($rate->range_max, 0, ',', '.') : 'Tak Terbatas' }}</td>
                         <td class="px-3 py-2">{{ $rate->rate_percent }}%</td>
-                        <td class="px-3 py-2">{{ $rate->company_name }}</td>
                         <td class="px-3 py-2 space-x-2">
                             <a class="text-blue-600 underline" href="{{ route('tax-rates.edit', $rate->id) }}">Edit</a>
                             <form method="post" action="{{ route('tax-rates.destroy', $rate->id) }}" class="inline">

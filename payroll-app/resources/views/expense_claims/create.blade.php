@@ -32,7 +32,7 @@
 
                             <div>
                                 <x-input-label for="amount" value="Jumlah (IDR)" />
-                                <x-text-input id="amount" name="amount" type="number" class="mt-1 block w-full" :value="old('amount')" required min="0" />
+                                <x-text-input id="amount" name="amount" type="number" class="mt-1 block w-full text-right" :value="old('amount')" required min="0" />
                                 <x-input-error :messages="$errors->get('amount')" class="mt-2" />
                             </div>
 

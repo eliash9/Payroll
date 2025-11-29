@@ -18,7 +18,6 @@
                 <tr class="bg-slate-100 text-left">
                     <th class="px-3 py-2">Kode</th>
                     <th class="px-3 py-2">Nama</th>
-                    <th class="px-3 py-2">Perusahaan</th>
                     <th class="px-3 py-2">Aksi</th>
                 </tr>
                 </thead>
@@ -27,7 +26,6 @@
                     <tr class="border-t">
                         <td class="px-3 py-2">{{ $department->code }}</td>
                         <td class="px-3 py-2">{{ $department->name }}</td>
-                        <td class="px-3 py-2">{{ $department->company_name }}</td>
                         <td class="px-3 py-2 space-x-2">
                             <a class="text-blue-600 underline" href="{{ route('departments.edit', $department->id) }}">Edit</a>
                             <form method="post" action="{{ route('departments.destroy', $department->id) }}" class="inline">
