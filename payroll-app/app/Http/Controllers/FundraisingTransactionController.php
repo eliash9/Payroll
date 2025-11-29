@@ -26,11 +26,13 @@ class FundraisingTransactionController extends Controller
             'category' => ['nullable', Rule::in(['zakat', 'infaq', 'shodaqoh', 'wakaf', 'donation', 'other'])],
             'date_received' => ['required', 'date'],
             'notes' => ['nullable', 'string'],
+            'status' => ['nullable', Rule::in(['pending', 'verified', 'rejected'])],
         ]);
 
         $this->assertCompanyAccess($user?->company_id, $data['company_id']);
 
         $data['currency'] = $data['currency'] ?? 'IDR';
+        $data['status'] = $data['status'] ?? 'pending';
         $data['created_at'] = now();
         $data['updated_at'] = now();
 

@@ -16,6 +16,10 @@ Route::middleware(['auth:sanctum', 'company.scope'])->group(function () {
     Route::post('/fundraising/summary/generate', [FundraisingSummaryController::class, 'generate']);
     Route::get('/fundraising/summary', [FundraisingSummaryController::class, 'index']);
 
+    Route::get('/expense-claims', [\App\Http\Controllers\ExpenseClaimController::class, 'index']);
+    Route::post('/expense-claims', [\App\Http\Controllers\ExpenseClaimController::class, 'store']);
+    Route::post('/expense-claims/{id}/status', [\App\Http\Controllers\ExpenseClaimController::class, 'updateStatus']);
+
     Route::post('/payroll-periods/{id}/generate-volunteer-payroll', [VolunteerPayrollController::class, 'generate']);
     Route::post('/payroll-periods/{id}/generate-regular-payroll', [RegularPayrollController::class, 'generate']);
 

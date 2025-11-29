@@ -50,18 +50,15 @@ class VolunteerPayrollService
                 $totalDonation = DB::table('fundraising_transactions')
                     ->where('fundraiser_id', $volunteer->id)
                     ->whereBetween('date_received', [$start, $end])
+                    ->where('status', 'verified')
                     ->sum('amount');
 
-                $commission = $totalDonation * ((float) $volunteer->commission_rate / 100);
-                if ($volunteer->max_commission_cap && $commission > (float) $volunteer->max_commission_cap) {
-                    $commission = (float) $volunteer->max_commission_cap;
-                }
+                $commission = $this->calculateCommission($volunteer, $totalDonation, $period->company_id);
 
-                $kpiBonus = $this->calculateKpiBonus($volunteer->id, $start, $end);
                 $kpiComponents = $this->getKpiComponents($volunteer->id, $start, $end, $period->company_id);
                 $kpiTotal = array_sum(array_column($kpiComponents, 'amount'));
 
-                $gross = $hourlyIncome + $commission + $kpiBonus + $kpiTotal;
+                $gross = $hourlyIncome + $commission + $kpiTotal;
                 $net = $gross; // no deduction for volunteers by default
 
                 $headerId = DB::table('payroll_headers')->updateOrInsert(
@@ -107,15 +104,7 @@ class VolunteerPayrollService
                         'created_at' => now(),
                         'updated_at' => now(),
                     ],
-                    [
-                        'payroll_header_id' => $header->id,
-                        'payroll_component_id' => $components['TARGET_BONUS'],
-                        'amount' => $kpiBonus,
-                        'quantity' => null,
-                        'remark' => 'KPI bonus',
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ],
+
                 ];
 
                 foreach ($kpiComponents as $kpiComp) {
@@ -143,29 +132,7 @@ class VolunteerPayrollService
         }
     }
 
-    private function calculateKpiBonus(int $employeeId, Carbon $start, Carbon $end): float
-    {
-        $rows = DB::table('employee_kpi_results')
-            ->join('kpi_payroll_mapping', 'kpi_payroll_mapping.kpi_id', '=', 'employee_kpi_results.kpi_id')
-            ->select('employee_kpi_results.achievement_percentage', 'employee_kpi_results.actual_value', 'kpi_payroll_mapping.max_amount')
-            ->where('employee_kpi_results.employee_id', $employeeId)
-            ->whereBetween('period_start', [$start->toDateString(), $end->toDateString()])
-            ->whereBetween('period_end', [$start->toDateString(), $end->toDateString()])
-            ->get();
 
-        $bonus = 0.0;
-        foreach ($rows as $row) {
-            if ($row->achievement_percentage >= 100) {
-                if ($row->max_amount) {
-                    $bonus += ($row->achievement_percentage / 100) * (float) $row->max_amount;
-                } else {
-                    $bonus += (float) $row->actual_value;
-                }
-            }
-        }
-
-        return $bonus;
-    }
 
     /**
      * Simulasi payroll relawan tanpa menulis ke database.
@@ -200,23 +167,25 @@ class VolunteerPayrollService
             $totalDonation = DB::table('fundraising_transactions')
                 ->where('fundraiser_id', $volunteer->id)
                 ->whereBetween('date_received', [$start, $end])
+                ->where('status', 'verified')
                 ->sum('amount');
 
-            $commission = $totalDonation * ((float) $volunteer->commission_rate / 100);
-            if ($volunteer->max_commission_cap && $commission > (float) $volunteer->max_commission_cap) {
-                $commission = (float) $volunteer->max_commission_cap;
-            }
+            $commission = $this->calculateCommission($volunteer, $totalDonation, $period->company_id);
 
-            $kpiBonus = $this->calculateKpiBonus($volunteer->id, $start, $end);
+            $kpiComponents = $this->getKpiComponents($volunteer->id, $start, $end, $period->company_id);
+            $kpiTotal = array_sum(array_column($kpiComponents, 'amount'));
 
-            $gross = $hourlyIncome + $commission + $kpiBonus;
+            $gross = $hourlyIncome + $commission + $kpiTotal;
             $net = $gross;
 
             $components = [
                 ['code' => 'HOURLY_INCOME', 'label' => 'Hourly Income', 'amount' => $hourlyIncome, 'quantity' => $totalHours],
                 ['code' => 'FUNDRAISING_COMMISSION', 'label' => 'Komisi Fundraising', 'amount' => $commission, 'quantity' => $totalDonation],
-                ['code' => 'TARGET_BONUS', 'label' => 'Bonus KPI', 'amount' => $kpiBonus, 'quantity' => null],
             ];
+
+            foreach ($kpiComponents as $kc) {
+                $components[] = $kc;
+            }
 
             $results[] = [
                 'employee' => $volunteer,
@@ -274,5 +243,31 @@ class VolunteerPayrollService
         } catch (\Throwable $e) {
             return 0;
         }
+    }
+
+    private function calculateCommission($volunteer, float $totalDonation, int $companyId): float
+    {
+        // Check for tiered rules first
+        $rule = DB::table('commission_rules')
+            ->where('company_id', $companyId)
+            ->where('min_amount', '<=', $totalDonation)
+            ->where(function ($q) use ($totalDonation) {
+                $q->whereNull('max_amount')
+                  ->orWhere('max_amount', '>=', $totalDonation);
+            })
+            ->orderByDesc('min_amount')
+            ->first();
+
+        if ($rule) {
+            return $totalDonation * ((float) $rule->rate / 100);
+        }
+
+        // Fallback to employee rate
+        $commission = $totalDonation * ((float) $volunteer->commission_rate / 100);
+        if ($volunteer->max_commission_cap && $commission > (float) $volunteer->max_commission_cap) {
+            $commission = (float) $volunteer->max_commission_cap;
+        }
+
+        return $commission;
     }
 }

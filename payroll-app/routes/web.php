@@ -20,6 +20,7 @@ use App\Http\Controllers\KpiMasterController;
 use App\Http\Controllers\EmployeeKpiAssignmentController;
 use App\Http\Controllers\EmployeeBpjsController;
 use App\Http\Controllers\FundraisingTransactionUiController;
+use App\Http\Controllers\ExpenseClaimUiController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -52,6 +53,12 @@ Route::middleware(['auth', 'verified', 'company.scope', 'role:admin'])->group(fu
     Route::resource('employee-bpjs', EmployeeBpjsController::class)->except(['show']);
     Route::resource('employee-loans', \App\Http\Controllers\EmployeeLoanController::class)->except(['show']);
     Route::get('fundraising-transactions', [FundraisingTransactionUiController::class, 'index'])->name('fundraising.transactions.index');
+    Route::get('fundraising-transactions/create', [FundraisingTransactionUiController::class, 'create'])->name('fundraising.transactions.create');
+    Route::post('fundraising-transactions', [FundraisingTransactionUiController::class, 'store'])->name('fundraising.transactions.store');
+
+    Route::resource('expense-claims', ExpenseClaimUiController::class)->only(['index', 'create', 'store']);
+    Route::post('expense-claims/{id}/status', [ExpenseClaimUiController::class, 'updateStatus'])->name('expense-claims.update-status');
+
     Route::resource('users', UserController::class)->except(['show']);
     Route::post('/payroll-periods/{id}/approve', [PayrollPeriodController::class, 'approve'])->name('payroll.periods.approve');
 

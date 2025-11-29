@@ -12,7 +12,7 @@
     $sdmActive = request()->routeIs('employees.*') || request()->routeIs('employee-kpi.*') || request()->routeIs('employee-bpjs.*') || request()->routeIs('employee-loans.*');
     $attendanceActive = request()->routeIs('attendance.*') || request()->routeIs('leaveovertime.*');
     $payrollActive = request()->routeIs('payroll.periods.*') || request()->routeIs('payslips.*');
-    $fundraisingActive = request()->routeIs('fundraising.transactions.*');
+    $fundraisingActive = request()->routeIs('fundraising.transactions.*') || request()->routeIs('expense-claims.*');
 @endphp
 
 <nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
@@ -120,6 +120,9 @@
                         <x-slot name="content">
                             <x-dropdown-link :href="route('fundraising.transactions.index')" class="{{ request()->routeIs('fundraising.transactions.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
                                 Transaksi Fundraising
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('expense-claims.index')" class="{{ request()->routeIs('expense-claims.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
+                                Klaim Pengeluaran
                             </x-dropdown-link>
                         </x-slot>
                     </x-dropdown>
@@ -296,6 +299,9 @@
                 <div class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Fundraising</div>
                 <x-responsive-nav-link :href="route('fundraising.transactions.index')" :active="request()->routeIs('fundraising.transactions.*')" class="ps-6">
                     Transaksi Fundraising
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('expense-claims.index')" :active="request()->routeIs('expense-claims.*')" class="ps-6">
+                    Klaim Pengeluaran
                 </x-responsive-nav-link>
             </div>
         </div>

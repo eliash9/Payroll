@@ -21,6 +21,7 @@ class FundraisingSummaryService
             ->selectRaw('SUM(amount) as total_amount')
             ->selectRaw('COUNT(*) as total_transactions')
             ->whereBetween('date_received', [$start, $end])
+            ->where('status', 'verified')
             ->when($companyId, fn($q) => $q->where('company_id', $companyId))
             ->groupBy('company_id', 'fundraiser_id', DB::raw('CAST(date_received as date)'))
             ->get();

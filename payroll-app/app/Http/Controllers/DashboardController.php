@@ -127,6 +127,12 @@ class DashboardController extends Controller
             $commission = (float) $emp->max_commission_cap;
         }
 
+        $claims = DB::table('expense_claims')
+            ->where('employee_id', $employeeId)
+            ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
+            ->orderByDesc('date')
+            ->get();
+
         return view('volunteer', [
             'employee' => $emp,
             'period' => $period,
@@ -134,6 +140,7 @@ class DashboardController extends Controller
             'totalHours' => $totalHours,
             'hourlyIncome' => $hourlyIncome,
             'commission' => $commission,
+            'claims' => $claims,
         ]);
     }
 }
