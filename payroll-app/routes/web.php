@@ -39,6 +39,9 @@ Route::middleware(['auth', 'verified', 'company.scope', 'role:admin,manager'])->
     Route::get('/payslip/{periodId}/{employeeId}', [PayslipController::class, 'show'])->name('payslips.show');
 
     Route::resource('employees', EmployeeController::class)->except(['show']);
+    Route::get('employees/{employee}', [EmployeeController::class, 'show'])->name('employees.show');
+    Route::get('employees/{employee}/mutations/create', [\App\Http\Controllers\MutationController::class, 'create'])->name('employees.mutations.create');
+    Route::post('employees/{employee}/mutations', [\App\Http\Controllers\MutationController::class, 'store'])->name('employees.mutations.store');
     // Branches, Departments, etc. are usually company-specific, so managers can manage them.
     Route::resource('branches', BranchController::class)->except(['show']);
     Route::resource('departments', DepartmentController::class)->except(['show']);
@@ -96,4 +99,32 @@ Route::middleware(['auth', 'verified', 'company.scope', 'role:admin'])->group(fu
     Route::resource('users', UserController::class)->except(['show']);
 });
 
+
+// LAZ Module Routes
+Route::middleware(['auth'])->prefix('laz')->name('laz.')->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\Laz\LazDashboardController::class, 'index'])->name('dashboard');
+
+    Route::resource('programs', App\Http\Controllers\Laz\ProgramController::class)->middleware('laz.role:admin,admin_pusat');
+    Route::resource('periods', App\Http\Controllers\Laz\ProgramPeriodController::class)->middleware('laz.role:admin,admin_pusat');
+
+    Route::get('applications', [App\Http\Controllers\Laz\ApplicationController::class, 'index'])->name('applications.index')->middleware('laz.role:admin,admin_pusat,admin_cabang,approver,keuangan,surveyor,auditor');
+    Route::get('applications/{application}', [App\Http\Controllers\Laz\ApplicationController::class, 'show'])->name('applications.show')->middleware('laz.role:admin,admin_pusat,admin_cabang,approver,keuangan,surveyor,auditor');
+    Route::post('applications/{application}/status', [App\Http\Controllers\Laz\ApplicationController::class, 'updateStatus'])->name('applications.status')->middleware('laz.role:admin,admin_pusat,admin_cabang');
+    Route::post('applications/{application}/assign-surveyor', [App\Http\Controllers\Laz\ApplicationController::class, 'assignSurveyor'])->name('applications.assign-surveyor')->middleware('laz.role:admin,admin_pusat,admin_cabang');
+
+    Route::get('surveys', [App\Http\Controllers\Laz\SurveyController::class, 'index'])->name('surveys.index')->middleware('laz.role:admin,admin_pusat,admin_cabang,surveyor');
+    Route::post('applications/{application}/survey', [App\Http\Controllers\Laz\SurveyController::class, 'store'])->name('surveys.store')->middleware('laz.role:admin,admin_pusat,admin_cabang,surveyor');
+
+    Route::get('approvals', [App\Http\Controllers\Laz\ApprovalController::class, 'index'])->name('approvals.index')->middleware('laz.role:admin,approver');
+    Route::post('applications/{application}/approve', [App\Http\Controllers\Laz\ApprovalController::class, 'store'])->name('approvals.store')->middleware('laz.role:admin,approver');
+
+    Route::get('disbursements', [App\Http\Controllers\Laz\DisbursementController::class, 'index'])->name('disbursements.index')->middleware('laz.role:admin,keuangan');
+    Route::post('applications/{application}/disburse', [App\Http\Controllers\Laz\DisbursementController::class, 'store'])->name('disbursements.store')->middleware('laz.role:admin,keuangan');
+
+    Route::get('reports', [App\Http\Controllers\Laz\LazReportController::class, 'index'])->name('reports.index')->middleware('laz.role:admin,admin_pusat,auditor');
+
+    Route::view('guide', 'laz.guide')->name('guide')->middleware('laz.role:admin,admin_pusat,admin_cabang,surveyor,approver,keuangan,auditor');
+});
+
 require __DIR__.'/auth.php';
+

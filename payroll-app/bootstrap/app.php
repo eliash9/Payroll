@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\EnsureRole::class,
             'company.scope' => \App\Http\Middleware\EnsureUserHasCompany::class,
+            'laz.role' => \App\Http\Middleware\LazRoleMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

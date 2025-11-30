@@ -5,6 +5,8 @@ use App\Http\Controllers\FundraisingTransactionController;
 use App\Http\Controllers\RegularPayrollController;
 use App\Http\Controllers\VolunteerPayrollController;
 use App\Http\Controllers\Api\AuthTokenController;
+use App\Http\Controllers\Api\Laz\PublicProgramController;
+use App\Http\Controllers\Api\Laz\PublicApplicationController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
@@ -46,4 +48,15 @@ Route::middleware(['auth:sanctum', 'company.scope'])->group(function () {
         }
         return DB::table('positions')->where('company_id', $company)->select('id', 'name')->orderBy('name')->get();
     });
+});
+
+// LAZ Public API
+// LAZ Public API
+Route::prefix('v1/laz')->middleware('throttle:60,1')->group(function () {
+    Route::get('/programs', [PublicProgramController::class, 'index']);
+    Route::get('/programs/{id}', [PublicProgramController::class, 'show']);
+    
+    // Stricter rate limit for submissions (e.g., 5 requests per minute per IP)
+    Route::post('/applications', [PublicApplicationController::class, 'store'])->middleware('throttle:5,1');
+    Route::post('/check-status', [PublicApplicationController::class, 'checkStatus'])->middleware('throttle:10,1');
 });

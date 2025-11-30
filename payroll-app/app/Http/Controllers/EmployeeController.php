@@ -85,7 +85,16 @@ class EmployeeController extends Controller
             'company_id' => 'required|integer|exists:companies,id',
             'employee_code' => 'required|string|max:50|unique:employees,employee_code',
             'full_name' => 'required|string|max:191',
+            'nickname' => 'nullable|string|max:100',
+            'national_id_number' => 'nullable|string|max:32',
+            'family_card_number' => 'nullable|string|max:32',
+            'birth_place' => 'nullable|string|max:100',
+            'birth_date' => 'nullable|date',
+            'gender' => 'nullable|in:male,female',
+            'marital_status' => 'nullable|in:single,married,divorced,widowed',
             'email' => 'nullable|email|max:191',
+            'phone' => 'nullable|string|max:50',
+            'address' => 'nullable|string',
             'branch_id' => 'nullable|integer',
             'department_id' => 'nullable|integer',
             'position_id' => 'nullable|integer',
@@ -95,6 +104,7 @@ class EmployeeController extends Controller
             'basic_salary' => 'nullable|numeric',
             'employment_type' => 'required|in:permanent,contract,intern,outsourcing',
             'status' => 'required|in:active,inactive,suspended,terminated',
+            'join_date' => 'nullable|date',
         ]);
 
         // Enforce company scope for non-super-admins
@@ -112,7 +122,24 @@ class EmployeeController extends Controller
         return redirect()->route('employees.index')->with('success', 'Employee created');
     }
 
-    public function edit(int $id)
+    public function show($id)
+    {
+        $employee = Employee::with(['branch', 'department', 'position', 'company'])->findOrFail($id);
+        
+        // Check company scope
+        if (Auth::user()->company_id && $employee->company_id != Auth::user()->company_id) {
+            abort(403);
+        }
+
+        $careerHistories = \App\Models\CareerHistory::where('employee_id', $id)
+            ->with(['oldBranch', 'newBranch', 'oldPosition', 'newPosition', 'oldDepartment', 'newDepartment', 'creator'])
+            ->orderByDesc('effective_date')
+            ->get();
+
+        return view('employees.show', compact('employee', 'careerHistories'));
+    }
+
+    public function edit($id)
     {
         // Employee::find($id) will automatically apply CompanyScope
         $employee = Employee::findOrFail($id);
@@ -130,7 +157,7 @@ class EmployeeController extends Controller
         return view('employees.edit', compact('employee', 'companies', 'branches', 'departments', 'positions'));
     }
 
-    public function update(Request $request, int $id)
+    public function update(Request $request, $id)
     {
         $employee = Employee::findOrFail($id);
 
@@ -164,7 +191,7 @@ class EmployeeController extends Controller
         return redirect()->route('employees.index')->with('success', 'Employee updated');
     }
 
-    public function destroy(int $id)
+    public function destroy($id)
     {
         $employee = Employee::findOrFail($id);
         $employee->delete();

@@ -13,6 +13,7 @@
     $attendanceActive = request()->routeIs('attendance.*') || request()->routeIs('leaveovertime.*');
     $payrollActive = request()->routeIs('payroll.periods.*') || request()->routeIs('payslips.*');
     $fundraisingActive = request()->routeIs('fundraising.transactions.*') || request()->routeIs('expense-claims.*');
+    $lazActive = request()->routeIs('laz.*');
 @endphp
 
 <nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
@@ -89,9 +90,6 @@
                         </x-slot>
 
                         <x-slot name="content">
-                            <x-dropdown-link :href="route('dashboard.volunteer')" class="{{ request()->routeIs('dashboard.volunteer') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
-                                Relawan
-                            </x-dropdown-link>
                             <x-dropdown-link :href="route('employees.index')" class="{{ request()->routeIs('employees.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
                                 Karyawan
                             </x-dropdown-link>
@@ -126,6 +124,49 @@
                             </x-dropdown-link>
                         </x-slot>
                     </x-dropdown>
+
+                    @if(Auth::user()->canAccessLaz())
+                    <x-dropdown align="left" width="48">
+                        <x-slot name="trigger">
+                            <button class="{{ $lazActive
+                                ? 'inline-flex h-full items-center px-1 py-6 border-b-2 border-indigo-400 text-sm font-medium leading-5 text-gray-900 focus:outline-none focus:border-indigo-700 transition duration-150 ease-in-out'
+                                : 'inline-flex h-full items-center px-1 py-6 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out' }}">
+                                <span>LAZ</span>
+                                <svg class="ms-1 fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                            </button>
+                        </x-slot>
+
+                        <x-slot name="content">
+                            <x-dropdown-link :href="route('laz.dashboard')" class="{{ request()->routeIs('laz.dashboard') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
+                                Dashboard
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('laz.programs.index')" class="{{ request()->routeIs('laz.programs.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
+                                Program
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('laz.periods.index')" class="{{ request()->routeIs('laz.periods.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
+                                Periode
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('laz.applications.index')" class="{{ request()->routeIs('laz.applications.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
+                                Permohonan
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('laz.surveys.index')" class="{{ request()->routeIs('laz.surveys.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
+                                Survey
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('laz.approvals.index')" class="{{ request()->routeIs('laz.approvals.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
+                                Persetujuan
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('laz.disbursements.index')" class="{{ request()->routeIs('laz.disbursements.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
+                                Penyaluran
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('laz.reports.index')" class="{{ request()->routeIs('laz.reports.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
+                                Laporan
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('laz.guide')" class="{{ request()->routeIs('laz.guide') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
+                                Panduan
+                            </x-dropdown-link>
+                        </x-slot>
+                    </x-dropdown>
+                    @endif
                     <x-dropdown align="left" width="48">
                         <x-slot name="trigger">
                             <button class="{{ $attendanceActive
@@ -327,6 +368,39 @@
                     Klaim Pengeluaran
                 </x-responsive-nav-link>
             </div>
+
+            @if(Auth::user()->canAccessLaz())
+            <div class="pt-3 border-t border-gray-200 space-y-1">
+                <div class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">LAZ</div>
+                <x-responsive-nav-link :href="route('laz.dashboard')" :active="request()->routeIs('laz.dashboard')" class="ps-6">
+                    Dashboard
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('laz.programs.index')" :active="request()->routeIs('laz.programs.*')" class="ps-6">
+                    Program
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('laz.periods.index')" :active="request()->routeIs('laz.periods.*')" class="ps-6">
+                    Periode
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('laz.applications.index')" :active="request()->routeIs('laz.applications.*')" class="ps-6">
+                    Permohonan
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('laz.surveys.index')" :active="request()->routeIs('laz.surveys.*')" class="ps-6">
+                    Survey
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('laz.approvals.index')" :active="request()->routeIs('laz.approvals.*')" class="ps-6">
+                    Persetujuan
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('laz.disbursements.index')" :active="request()->routeIs('laz.disbursements.*')" class="ps-6">
+                    Penyaluran
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('laz.reports.index')" :active="request()->routeIs('laz.reports.*')" class="ps-6">
+                    Laporan
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('laz.guide')" :active="request()->routeIs('laz.guide')" class="ps-6">
+                    Panduan
+                </x-responsive-nav-link>
+            </div>
+            @endif
 
             <div class="pt-3 border-t border-gray-200 space-y-1">
                 <div class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Laporan</div>

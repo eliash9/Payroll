@@ -23,6 +23,7 @@ class User extends Authenticatable
         'email',
         'role',
         'company_id',
+        'branch_id',
         'password',
     ];
 
@@ -47,5 +48,42 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class);
+    }
+
+    public function surveys()
+    {
+        return $this->hasMany(Survey::class, 'surveyor_id');
+    }
+
+    public function approvals()
+    {
+        return $this->hasMany(Approval::class, 'approver_id');
+    }
+
+    public function disbursements()
+    {
+        return $this->hasMany(Disbursement::class, 'disbursed_by');
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    public function hasRole(string|array $roles): bool
+    {
+        $target = \Illuminate\Support\Collection::wrap($roles);
+
+        return $this->roles->pluck('name')->intersect($target)->isNotEmpty();
+    }
+
+    public function canAccessLaz(): bool
+    {
+        return $this->role === 'admin' || $this->roles()->exists();
     }
 }

@@ -61,7 +61,8 @@
                         <td class="px-3 py-2 text-right">Rp {{ number_format($emp->hourly_rate,0,',','.') }}</td>
                         <td class="px-3 py-2">{{ $emp->commission_rate }}</td>
                         <td class="px-3 py-2 space-x-2">
-                            <a class="text-blue-600 underline" href="{{ route('employees.edit', $emp->id) }}">Edit</a>
+                            <a class="text-emerald-600 font-medium hover:underline" href="{{ route('employees.show', $emp->id) }}">Detail</a>
+                            <a class="text-blue-600 hover:underline" href="{{ route('employees.edit', $emp->id) }}">Edit</a>
                             <form method="post" action="{{ route('employees.destroy', $emp->id) }}" class="inline">
                                 @csrf
                                 @method('delete')
