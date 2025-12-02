@@ -40,14 +40,14 @@
                     <input type="time" name="time" value="{{ now()->format('H:i') }}" class="w-full border rounded px-2 py-2">
                 </div>
                 <div>
-                    <label class="text-sm">Type</label>
+                    <label class="text-sm">Tipe</label>
                     <select name="type" class="w-full border rounded px-2 py-2">
-                        <option value="in">Check-in</option>
-                        <option value="out">Check-out</option>
+                        <option value="in">Masuk</option>
+                        <option value="out">Keluar</option>
                     </select>
                 </div>
                 <div class="md:col-span-4 flex items-center gap-2">
-                    <label class="text-sm">Worked minutes (opsional)</label>
+                    <label class="text-sm">Menit Kerja (opsional)</label>
                     <input type="number" name="worked_minutes" class="border rounded px-2 py-2">
                 </div>
                 <div class="md:col-span-4">
@@ -64,9 +64,9 @@
                     <th class="px-3 py-2">Tanggal</th>
                     <th class="px-3 py-2">Karyawan</th>
                     <th class="px-3 py-2">Cabang</th>
-                    <th class="px-3 py-2">Check-in</th>
-                    <th class="px-3 py-2">Check-out</th>
-                    <th class="px-3 py-2">Worked (menit)</th>
+                    <th class="px-3 py-2">Masuk</th>
+                    <th class="px-3 py-2">Keluar</th>
+                    <th class="px-3 py-2">Kerja (menit)</th>
                     <th class="px-3 py-2">Status</th>
                 </tr>
                 </thead>

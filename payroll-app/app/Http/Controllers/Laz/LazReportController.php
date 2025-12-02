@@ -9,7 +9,7 @@ use Illuminate\View\View;
 
 class LazReportController extends Controller
 {
-    public function index(): View
+    private function getReportData(): array
     {
         $perProgram = Application::select(
             'program_id',
@@ -63,13 +63,47 @@ class LazReportController extends Controller
             DB::raw('sum(requested_amount) as total_requested')
         )->groupBy('location_province')->orderByDesc('total')->limit(20)->get();
 
-        return view('laz.reports.index', [
+        return [
             'perProgram' => $perProgram,
             'perProgramApproved' => $perProgramApproved,
             'perProgramDisbursed' => $perProgramDisbursed,
             'perMonth' => $perMonth,
             'segmentApplicant' => $segmentApplicant,
             'segmentProvince' => $segmentProvince,
+        ];
+    }
+
+    public function index(): View
+    {
+        return view('laz.reports.index', $this->getReportData());
+    }
+
+    public function exportDetailExcel()
+    {
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\Laz\LazDetailExport, 'laporan_detail_laz.xlsx');
+    }
+
+    public function exportRekapExcel()
+    {
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\Laz\LazRekapExport($this->getReportData()), 'laporan_rekap_laz.xlsx');
+    }
+
+    public function exportDetailPdf()
+    {
+        $applications = Application::with(['program', 'period', 'applicant', 'organization', 'branch'])->get();
+        $companyName = \App\Models\Company::first()->name ?? config('app.name');
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('laz.reports.pdf.detail', [
+            'applications' => $applications,
+            'companyName' => $companyName
         ]);
+        return $pdf->download('laporan_detail_laz.pdf');
+    }
+
+    public function exportRekapPdf()
+    {
+        $data = $this->getReportData();
+        $data['companyName'] = \App\Models\Company::first()->name ?? config('app.name');
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('laz.reports.pdf.rekap', $data);
+        return $pdf->download('laporan_rekap_laz.pdf');
     }
 }

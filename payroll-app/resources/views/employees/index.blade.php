@@ -38,13 +38,13 @@
             <table class="min-w-full text-sm">
                 <thead>
                 <tr class="bg-slate-100 text-left">
-                    <th class="px-3 py-2">Code</th>
+                    <th class="px-3 py-2">Kode</th>
                     <th class="px-3 py-2">Nama</th>
                     <th class="px-3 py-2">Cabang</th>
                     <th class="px-3 py-2">Status</th>
-                    <th class="px-3 py-2">Volunteer?</th>
-                    <th class="px-3 py-2">Basic Salary</th>
-                    <th class="px-3 py-2">Hourly</th>
+                    <th class="px-3 py-2">Relawan?</th>
+                    <th class="px-3 py-2">Gaji Pokok</th>
+                    <th class="px-3 py-2">Per Jam</th>
                     <th class="px-3 py-2">Komisi %</th>
                     <th class="px-3 py-2">Aksi</th>
                 </tr>

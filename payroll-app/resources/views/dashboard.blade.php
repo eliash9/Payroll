@@ -9,7 +9,7 @@
             </div>
             <form method="get" class="flex items-center gap-2">
                 <input type="month" name="period" value="{{ $period }}" class="border rounded px-2 py-1 text-sm">
-                <input type="text" name="campaign" value="{{ $campaign }}" placeholder="Campaign (opsional)" class="border rounded px-2 py-1 text-sm">
+                <input type="text" name="campaign" value="{{ $campaign }}" placeholder="Kampanye (opsional)" class="border rounded px-2 py-1 text-sm">
                 <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm">Filter</button>
             </form>
         </div>
@@ -112,7 +112,7 @@
             <div class="bg-white shadow-sm rounded-lg p-6 lg:col-span-2">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="font-semibold text-lg text-gray-800">Top Fundraiser</h2>
-                    <span class="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">Top 10</span>
+                    <span class="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">10 Teratas</span>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-sm divide-y divide-gray-200">

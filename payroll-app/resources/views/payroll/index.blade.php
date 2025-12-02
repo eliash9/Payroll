@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center justify-between gap-4">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Payroll Period</h2>
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Periode Payroll</h2>
             @if($periods->count())
                 <form method="post" action="{{ route('payroll.periods.generate.volunteer', $periods->first()->id) }}">
                     @csrf
@@ -39,8 +39,16 @@
                     <label class="text-sm">Status</label>
                     <select name="status" class="border rounded px-3 py-2">
                         <option value="">Semua</option>
+                        @php
+                            $statusMap = [
+                                'draft' => 'Draft',
+                                'calculated' => 'Dihitung',
+                                'approved' => 'Disetujui',
+                                'closed' => 'Ditutup'
+                            ];
+                        @endphp
                         @foreach(['draft','calculated','approved','closed'] as $st)
-                            <option value="{{ $st }}" @selected(request('status')===$st)>{{ ucfirst($st) }}</option>
+                            <option value="{{ $st }}" @selected(request('status')===$st)>{{ $statusMap[$st] }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -55,7 +63,7 @@
                     <th class="px-3 py-2">Periode</th>
                     <th class="px-3 py-2">Status</th>
                     <th class="px-3 py-2 text-right">Slip</th>
-                    <th class="px-3 py-2 text-right">Net Total</th>
+                    <th class="px-3 py-2 text-right">Total Bersih</th>
                     <th class="px-3 py-2">Aksi</th>
                 </tr>
                 </thead>
@@ -69,7 +77,7 @@
                         </td>
                         <td class="px-3 py-2">
                             <span class="px-2 py-1 rounded text-xs {{ $p->status === 'approved' ? 'bg-emerald-100 text-emerald-700' : ($p->status === 'calculated' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700') }}">
-                                {{ ucfirst($p->status) }}
+                                {{ $statusMap[$p->status] ?? ucfirst($p->status) }}
                             </span>
                         </td>
                         <td class="px-3 py-2 text-right">{{ $p->slip_count ?? 0 }}</td>
@@ -88,7 +96,7 @@
                             @if($p->status === 'calculated')
                                 <form class="inline" method="post" action="{{ route('payroll.periods.approve', $p->id) }}">
                                     @csrf
-                                    <button class="bg-amber-600 text-white px-3 py-1 rounded text-xs" onclick="return confirm('Setujui payroll periode ini? Data akan dikunci.')">Approve</button>
+                                    <button class="bg-amber-600 text-white px-3 py-1 rounded text-xs" onclick="return confirm('Setujui payroll periode ini? Data akan dikunci.')">Setujui</button>
                                 </form>
                             @endif
                             @if(!in_array($p->status, ['approved','closed']))

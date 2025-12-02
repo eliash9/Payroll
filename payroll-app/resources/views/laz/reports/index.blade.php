@@ -8,7 +8,29 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                <h1 class="text-xl font-semibold mb-4">Laporan & Analitik</h1>
+                <div class="flex justify-between items-center mb-4">
+                    <h1 class="text-xl font-semibold">Laporan & Analitik</h1>
+                    <div class="space-x-2">
+                        <div class="inline-block relative" x-data="{ open: false }">
+                            <button @click="open = !open" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">
+                                Export Excel
+                            </button>
+                            <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 py-1 border">
+                                <a href="{{ route('laz.reports.export.excel.rekap') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rekapitulasi</a>
+                                <a href="{{ route('laz.reports.export.excel.detail') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Detail Permohonan</a>
+                            </div>
+                        </div>
+                        <div class="inline-block relative" x-data="{ open: false }">
+                            <button @click="open = !open" class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700">
+                                Export PDF
+                            </button>
+                            <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50 py-1 border">
+                                <a href="{{ route('laz.reports.export.pdf.rekap') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rekapitulasi</a>
+                                <a href="{{ route('laz.reports.export.pdf.detail') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Detail Permohonan</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="grid md:grid-cols-2 gap-6">
                     <div>

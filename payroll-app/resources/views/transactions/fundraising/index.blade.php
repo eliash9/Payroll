@@ -40,7 +40,7 @@
                         <th class="px-3 py-2">Relawan</th>
                         <th class="px-3 py-2">Cabang</th>
                         <th class="px-3 py-2">Donatur</th>
-                        <th class="px-3 py-2">Campaign</th>
+                        <th class="px-3 py-2">Kampanye</th>
                         <th class="px-3 py-2">Kategori</th>
                         <th class="px-3 py-2">Jumlah</th>
                         <th class="px-3 py-2">Sumber</th>
@@ -63,7 +63,14 @@
                             <td class="px-3 py-2">{{ $tx->source }}</td>
                             <td class="px-3 py-2">
                                 <span class="px-2 py-1 rounded text-xs {{ $tx->status === 'verified' ? 'bg-green-100 text-green-800' : ($tx->status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800') }}">
-                                    {{ ucfirst($tx->status) }}
+                                    @php
+                                        $statusMap = [
+                                            'verified' => 'Terverifikasi',
+                                            'rejected' => 'Ditolak',
+                                            'pending' => 'Menunggu'
+                                        ];
+                                    @endphp
+                                    {{ $statusMap[$tx->status] ?? ucfirst($tx->status) }}
                                 </span>
                             </td>
                         </tr>

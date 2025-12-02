@@ -121,6 +121,10 @@ Route::middleware(['auth'])->prefix('laz')->name('laz.')->group(function () {
     Route::get('disbursements', [App\Http\Controllers\Laz\DisbursementController::class, 'index'])->name('disbursements.index')->middleware('laz.role:admin,keuangan');
     Route::post('applications/{application}/disburse', [App\Http\Controllers\Laz\DisbursementController::class, 'store'])->name('disbursements.store')->middleware('laz.role:admin,keuangan');
 
+    Route::get('reports/export/excel/detail', [App\Http\Controllers\Laz\LazReportController::class, 'exportDetailExcel'])->name('reports.export.excel.detail')->middleware('laz.role:admin,admin_pusat,auditor');
+    Route::get('reports/export/excel/rekap', [App\Http\Controllers\Laz\LazReportController::class, 'exportRekapExcel'])->name('reports.export.excel.rekap')->middleware('laz.role:admin,admin_pusat,auditor');
+    Route::get('reports/export/pdf/detail', [App\Http\Controllers\Laz\LazReportController::class, 'exportDetailPdf'])->name('reports.export.pdf.detail')->middleware('laz.role:admin,admin_pusat,auditor');
+    Route::get('reports/export/pdf/rekap', [App\Http\Controllers\Laz\LazReportController::class, 'exportRekapPdf'])->name('reports.export.pdf.rekap')->middleware('laz.role:admin,admin_pusat,auditor');
     Route::get('reports', [App\Http\Controllers\Laz\LazReportController::class, 'index'])->name('reports.index')->middleware('laz.role:admin,admin_pusat,auditor');
 
     Route::view('guide', 'laz.guide')->name('guide')->middleware('laz.role:admin,admin_pusat,admin_cabang,surveyor,approver,keuangan,auditor');
