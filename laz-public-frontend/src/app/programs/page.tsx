@@ -95,7 +95,7 @@ export default function ProgramsPage() {
                                         <span>{program.active_periods.length} Periode Aktif</span>
                                     </div>
                                     <Link
-                                        href={`/apply/${program.id}`}
+                                        href={`/apply?programId=${program.id}`}
                                         className="block w-full text-center bg-laz-green-500 hover:bg-laz-green-600 text-white font-medium py-2.5 rounded-lg transition-colors"
                                     >
                                         Ajukan Sekarang

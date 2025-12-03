@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { apiClient, fetcher } from '@/lib/api';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { AlertCircle, Upload, X } from 'lucide-react';
 
 // Schema Validation
@@ -36,8 +36,9 @@ interface Program {
     active_periods: { id: number; name: string }[];
 }
 
-export default function ApplyPage() {
-    const params = useParams();
+function ApplyForm() {
+    const searchParams = useSearchParams();
+    const programId = searchParams.get('programId');
     const router = useRouter();
     const [program, setProgram] = useState<Program | null>(null);
     const [loading, setLoading] = useState(true);
@@ -57,8 +58,8 @@ export default function ApplyPage() {
     });
 
     useEffect(() => {
-        if (params.programId) {
-            fetcher(`/programs/${params.programId}`)
+        if (programId) {
+            fetcher(`/programs/${programId}`)
                 .then((data) => {
                     setProgram(data.data);
                     setLoading(false);
@@ -69,7 +70,7 @@ export default function ApplyPage() {
                     setLoading(false);
                 });
         }
-    }, [params.programId]);
+    }, [programId]);
 
     const onSubmit = async (data: ApplicationForm) => {
         // Honeypot check
@@ -83,7 +84,7 @@ export default function ApplyPage() {
 
         try {
             const formData = new FormData();
-            formData.append('program_id', params.programId as string);
+            formData.append('program_id', programId as string);
             formData.append('program_period_id', data.program_period_id);
             formData.append('national_id', data.national_id);
             formData.append('full_name', data.full_name);
@@ -266,5 +267,13 @@ export default function ApplyPage() {
                 </div>
             </form>
         </div>
+    );
+}
+
+export default function ApplyPage() {
+    return (
+        <Suspense fallback={<div className="py-20 text-center">Memuat form...</div>}>
+            <ApplyForm />
+        </Suspense>
     );
 }
