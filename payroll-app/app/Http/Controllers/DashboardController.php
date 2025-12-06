@@ -192,4 +192,22 @@ class DashboardController extends Controller
             'claims' => $claims,
         ]);
     }
+    /**
+     * Dashboard for the logged-in volunteer.
+     */
+    public function myVolunteerDashboard(Request $request)
+    {
+        $user = Auth::user();
+        // Find employee by email
+        $employee = Employee::where('email', $user->email)->first();
+
+        if (!$employee) {
+            abort(404, 'Data karyawan/relawan tidak ditemukan untuk akun ini.');
+        }
+
+        // Set employee_id in request so we can reuse the volunteer method logic
+        $request->merge(['employee_id' => $employee->id]);
+        
+        return $this->volunteer($request);
+    }
 }

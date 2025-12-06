@@ -22,8 +22,12 @@
                         <input name="name" class="w-full border rounded px-3 py-2" required value="{{ old('name') }}">
                     </div>
                     <div>
-                        <label class="text-sm">Grade</label>
-                        <input name="grade" class="w-full border rounded px-3 py-2" value="{{ old('grade') }}">
+                        <label class="text-sm">Kode</label>
+                        <input name="code" class="w-full border rounded px-3 py-2" value="{{ old('code') }}">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="text-sm">Deskripsi</label>
+                        <textarea name="description" class="w-full border rounded px-3 py-2">{{ old('description') }}</textarea>
                     </div>
                 </div>
                 <div class="flex gap-2">

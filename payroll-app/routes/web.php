@@ -28,7 +28,35 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Fix for shared hosting storage link
+Route::get('/storage-link', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('storage:link');
+        return 'Storage link created successfully.';
+    } catch (\Exception $e) {
+        return 'Error creating storage link: ' . $e->getMessage();
+    }
+});
+
+// Fallback route to serve storage files directly if symlink fails
+Route::get('/storage/{path}', function ($path) {
+    $filePath = storage_path('app/public/' . $path);
+
+    if (!file_exists($filePath)) {
+        abort(404);
+    }
+
+    $file = \Illuminate\Support\Facades\File::get($filePath);
+    $type = \Illuminate\Support\Facades\File::mimeType($filePath);
+
+    $response = \Illuminate\Support\Facades\Response::make($file, 200);
+    $response->header("Content-Type", $type);
+
+    return $response;
+})->where('path', '.*');
+
 Route::middleware(['auth', 'verified', 'company.scope'])->group(function () {
+    Route::get('/dashboard/volunteer/me', [DashboardController::class, 'myVolunteerDashboard'])->name('dashboard.volunteer.me');
     Route::get('/dashboard/volunteer', [DashboardController::class, 'volunteer'])->name('dashboard.volunteer');
 });
 
@@ -38,13 +66,26 @@ Route::middleware(['auth', 'verified', 'company.scope', 'role:admin,manager'])->
     Route::get('/payslips', [PayslipController::class, 'index'])->name('payslips.index');
     Route::get('/payslip/{periodId}/{employeeId}', [PayslipController::class, 'show'])->name('payslips.show');
 
+    Route::get('employees/export', [EmployeeController::class, 'export'])->name('employees.export');
+    Route::post('employees/import', [EmployeeController::class, 'import'])->name('employees.import');
+    Route::get('employees/import-template', [EmployeeController::class, 'importTemplate'])->name('employees.import-template');
     Route::resource('employees', EmployeeController::class)->except(['show']);
     Route::get('employees/{employee}', [EmployeeController::class, 'show'])->name('employees.show');
     Route::get('employees/{employee}/mutations/create', [\App\Http\Controllers\MutationController::class, 'create'])->name('employees.mutations.create');
     Route::post('employees/{employee}/mutations', [\App\Http\Controllers\MutationController::class, 'store'])->name('employees.mutations.store');
     // Branches, Departments, etc. are usually company-specific, so managers can manage them.
+    Route::get('branches/export', [BranchController::class, 'export'])->name('branches.export');
+    Route::post('branches/import', [BranchController::class, 'import'])->name('branches.import');
+    Route::get('branches/import-template', [BranchController::class, 'importTemplate'])->name('branches.import-template');
     Route::resource('branches', BranchController::class)->except(['show']);
+    Route::get('departments/export', [DepartmentController::class, 'export'])->name('departments.export');
+    Route::post('departments/import', [DepartmentController::class, 'import'])->name('departments.import');
+    Route::get('departments/import-template', [DepartmentController::class, 'importTemplate'])->name('departments.import-template');
     Route::resource('departments', DepartmentController::class)->except(['show']);
+
+    Route::get('positions/export', [PositionController::class, 'export'])->name('positions.export');
+    Route::post('positions/import', [PositionController::class, 'import'])->name('positions.import');
+    Route::get('positions/import-template', [PositionController::class, 'importTemplate'])->name('positions.import-template');
     Route::resource('positions', PositionController::class)->except(['show']);
     Route::resource('shifts', ShiftController::class)->except(['show']);
     Route::resource('leave-types', LeaveTypeController::class)->except(['show']);
@@ -128,6 +169,9 @@ Route::middleware(['auth'])->prefix('laz')->name('laz.')->group(function () {
     Route::get('reports', [App\Http\Controllers\Laz\LazReportController::class, 'index'])->name('reports.index')->middleware('laz.role:admin,admin_pusat,auditor');
 
     Route::view('guide', 'laz.guide')->name('guide')->middleware('laz.role:admin,admin_pusat,admin_cabang,surveyor,approver,keuangan,auditor');
+
+    Route::get('settings', [App\Http\Controllers\Laz\LazSettingController::class, 'index'])->name('settings.index')->middleware('laz.role:admin,admin_pusat');
+    Route::post('settings', [App\Http\Controllers\Laz\LazSettingController::class, 'update'])->name('settings.update')->middleware('laz.role:admin,admin_pusat');
 });
 
 require __DIR__.'/auth.php';

@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/auth/token', [AuthTokenController::class, 'store']);
 
+Route::middleware('auth:sanctum')->get('/user', function (Illuminate\Http\Request $request) {
+    return $request->user();
+});
+
 Route::middleware(['auth:sanctum', 'company.scope'])->group(function () {
     Route::post('/fundraising/transactions', [FundraisingTransactionController::class, 'store']);
     Route::get('/fundraising/transactions', [FundraisingTransactionController::class, 'index']);
@@ -48,6 +52,14 @@ Route::middleware(['auth:sanctum', 'company.scope'])->group(function () {
         }
         return DB::table('positions')->where('company_id', $company)->select('id', 'name')->orderBy('name')->get();
     });
+
+    // Employee App Routes
+    Route::post('/attendance/clock-in', [\App\Http\Controllers\Api\AttendanceController::class, 'clockIn']);
+    Route::post('/attendance/clock-out', [\App\Http\Controllers\Api\AttendanceController::class, 'clockOut']);
+    Route::get('/attendance/history', [\App\Http\Controllers\Api\AttendanceController::class, 'history']);
+    
+    Route::get('/employee/profile', [\App\Http\Controllers\Api\EmployeeController::class, 'profile']);
+    Route::get('/employee/salary-slip', [\App\Http\Controllers\Api\EmployeeController::class, 'salarySlip']);
 });
 
 // LAZ Public API

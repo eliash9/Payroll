@@ -29,6 +29,24 @@
                         <label class="text-sm">Telepon</label>
                         <input name="phone" class="w-full border rounded px-3 py-2" value="{{ old('phone') }}">
                     </div>
+                    <div>
+                        <label class="text-sm">Latitude</label>
+                        <input name="latitude" type="number" step="any" class="w-full border rounded px-3 py-2" value="{{ old('latitude') }}">
+                    </div>
+                    <div>
+                        <label class="text-sm">Longitude</label>
+                        <input name="longitude" type="number" step="any" class="w-full border rounded px-3 py-2" value="{{ old('longitude') }}">
+                    </div>
+                    <div>
+                        <label class="text-sm">Grade</label>
+                        <select name="grade" class="w-full border rounded px-3 py-2">
+                            <option value="">Pilih Grade</option>
+                            <option value="A" @selected(old('grade') == 'A')>A</option>
+                            <option value="B" @selected(old('grade') == 'B')>B</option>
+                            <option value="C" @selected(old('grade') == 'C')>C</option>
+                            <option value="D" @selected(old('grade') == 'D')>D</option>
+                        </select>
+                    </div>
                 </div>
                 <div>
                     <label class="text-sm">Alamat</label>

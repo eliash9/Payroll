@@ -92,6 +92,15 @@ class PublicApplicationController extends Controller
                 }
             }
 
+            if ($applicant->email) {
+                try {
+                    \Illuminate\Support\Facades\Mail::to($applicant->email)->send(new \App\Mail\ApplicationCreatedMail($application));
+                } catch (\Exception $e) {
+                    // Log error but don't fail the transaction
+                    \Illuminate\Support\Facades\Log::error('Failed to send application created email: ' . $e->getMessage());
+                }
+            }
+
             return response()->json([
                 'message' => 'Application submitted successfully',
                 'data' => new ApplicationResource($application),

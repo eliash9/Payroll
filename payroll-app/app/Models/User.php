@@ -75,6 +75,11 @@ class User extends Authenticatable
         return $this->belongsTo(Branch::class);
     }
 
+    public function employee()
+    {
+        return $this->hasOne(Employee::class, 'email', 'email');
+    }
+
     public function hasRole(string|array $roles): bool
     {
         $target = \Illuminate\Support\Collection::wrap($roles);

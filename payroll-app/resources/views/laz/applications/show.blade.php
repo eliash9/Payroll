@@ -5,7 +5,7 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
+    <div class="py-12" x-data="{ showDocModal: false, docUrl: '', docType: '' }">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <!-- Header Section -->
@@ -150,15 +150,20 @@
                             </h3>
                             <div class="grid sm:grid-cols-2 gap-4">
                                 @forelse ($application->documents as $doc)
-                                    <a href="{{ Storage::url($doc->file_path) }}" target="_blank" class="flex items-center p-4 bg-white border border-slate-200 rounded-xl hover:border-emerald-500 hover:shadow-md transition-all group">
-                                        <div class="p-2 bg-emerald-50 text-emerald-600 rounded-lg mr-3 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                    <div class="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-xl hover:border-emerald-500 hover:shadow-md transition-all group">
+                                        <div class="flex items-center flex-1 cursor-pointer" @click="showDocModal = true; docUrl = '{{ Storage::url($doc->file_path) }}'; docType = '{{ $doc->document_type }}'">
+                                            <div class="p-2 bg-emerald-50 text-emerald-600 rounded-lg mr-3 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-slate-900">{{ $doc->document_type }}</p>
+                                                <p class="text-xs text-slate-500">Klik untuk melihat</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p class="font-medium text-slate-900">{{ $doc->document_type }}</p>
-                                            <p class="text-xs text-slate-500">Klik untuk melihat</p>
-                                        </div>
-                                    </a>
+                                        <a href="{{ Storage::url($doc->file_path) }}" download target="_blank" class="p-2 text-slate-400 hover:text-emerald-600 transition-colors" title="Unduh">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                        </a>
+                                    </div>
                                 @empty
                                     <div class="col-span-2 text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-300 text-slate-500">
                                         Belum ada dokumen yang diunggah
@@ -390,6 +395,15 @@
                                                 <time class="font-caveat font-medium text-indigo-500 text-xs">{{ $survey->created_at->format('d M Y') }}</time>
                                             </div>
                                             <div class="text-slate-500 text-xs">Surveyor: {{ $survey->surveyor->name }}<br>Rekomendasi: {{ $survey->recommendation }}</div>
+                                            @if($survey->photos->count() > 0)
+                                                <div class="mt-2 grid grid-cols-3 gap-2">
+                                                    @foreach($survey->photos as $photo)
+                                                        <a href="{{ Storage::url($photo->file_path) }}" target="_blank" class="block aspect-square rounded overflow-hidden border border-slate-200 hover:opacity-75">
+                                                            <img src="{{ Storage::url($photo->file_path) }}" alt="{{ $photo->caption }}" class="w-full h-full object-cover">
+                                                        </a>
+                                                    @endforeach
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
                                 @endforeach
@@ -429,6 +443,39 @@
                         </div>
 
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Document Modal -->
+    <div x-show="showDocModal" style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="showDocModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" @click="showDocModal = false" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div x-show="showDocModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title" x-text="docType"></h3>
+                        <button @click="showDocModal = false" class="text-gray-400 hover:text-gray-500">
+                            <span class="sr-only">Close</span>
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="mt-2 h-[70vh] bg-slate-100 rounded-lg overflow-hidden">
+                        <iframe :src="docUrl" class="w-full h-full border-0"></iframe>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                     <a :href="docUrl" download target="_blank" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-emerald-600 text-base font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Unduh
+                    </a>
+                    <button type="button" @click="showDocModal = false" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Tutup
+                    </button>
                 </div>
             </div>
         </div>

@@ -25,6 +25,10 @@
                         <label class="text-sm">Kode</label>
                         <input name="code" class="w-full border rounded px-3 py-2" value="{{ old('code', $department->code) }}">
                     </div>
+                    <div class="md:col-span-2">
+                        <label class="text-sm">Deskripsi</label>
+                        <textarea name="description" class="w-full border rounded px-3 py-2">{{ old('description', $department->description) }}</textarea>
+                    </div>
                 </div>
                 <div class="flex gap-2">
                     <button class="bg-blue-600 text-white px-4 py-2 rounded">Update</button>

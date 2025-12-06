@@ -34,7 +34,16 @@ class UserController extends Controller
         $branches = Branch::orderBy('name')->pluck('name', 'id');
         $lazRoles = Role::orderBy('name')->pluck('name', 'id');
         
-        return view('users.create', compact('companies', 'branches', 'lazRoles'));
+        // Get employees with email who are not yet users
+        $existingEmails = User::pluck('email')->toArray();
+        $potentialUsers = \App\Models\Employee::whereNotNull('email')
+            ->where('email', '!=', '')
+            ->whereNotIn('email', $existingEmails)
+            ->select('id', 'full_name', 'email', 'company_id', 'branch_id')
+            ->orderBy('full_name')
+            ->get();
+
+        return view('users.create', compact('companies', 'branches', 'lazRoles', 'potentialUsers'));
     }
 
     public function store(Request $request)

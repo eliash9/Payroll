@@ -197,4 +197,35 @@ class EmployeeController extends Controller
         $employee->delete();
         return redirect()->route('employees.index')->with('success', 'Employee deleted');
     }
+
+    public function export()
+    {
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\EmployeeExport, 'employees.xlsx');
+    }
+
+    public function importTemplate()
+    {
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\EmployeeTemplateExport, 'employee_template.xlsx');
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,csv',
+        ]);
+
+        try {
+            \Maatwebsite\Excel\Facades\Excel::import(new \App\Imports\EmployeeImport, $request->file('file'));
+            return redirect()->route('employees.index')->with('success', 'Employees imported successfully.');
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            $failures = $e->failures();
+            $messages = [];
+            foreach ($failures as $failure) {
+                $messages[] = 'Row ' . $failure->row() . ': ' . implode(', ', $failure->errors());
+            }
+            return redirect()->route('employees.index')->with('error', 'Import Validation Errors: ' . implode(' | ', $messages));
+        } catch (\Exception $e) {
+            return redirect()->route('employees.index')->with('error', 'Error importing employees: ' . $e->getMessage());
+        }
+    }
 }

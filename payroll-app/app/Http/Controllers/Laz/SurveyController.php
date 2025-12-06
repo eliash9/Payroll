@@ -15,7 +15,7 @@ class SurveyController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Survey::with(['application.program', 'application.applicant', 'application.organization'])
+        $query = Survey::with(['application.program', 'application.applicant', 'application.organization', 'photos'])
             ->orderByDesc('created_at');
 
         if ($request->user()->hasRole('surveyor')) {

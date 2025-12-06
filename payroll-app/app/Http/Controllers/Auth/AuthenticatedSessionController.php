@@ -28,6 +28,19 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $user = $request->user();
+
+        // 1. Volunteer Redirect
+        if ($user->role === 'volunteer') {
+            return redirect()->route('dashboard.volunteer.me');
+        }
+
+        // 2. LAZ Role Redirect (if not admin/manager/hr but has LAZ access)
+        // If user has 'admin' role, they usually go to main dashboard, but if they ONLY have LAZ roles:
+        if ($user->role !== 'admin' && $user->role !== 'manager' && $user->role !== 'hr' && $user->canAccessLaz()) {
+            return redirect()->route('laz.dashboard');
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

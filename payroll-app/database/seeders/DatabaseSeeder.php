@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             VolunteerPayrollComponentsSeeder::class,
             DemoDataSeeder::class,
+            LazInitialDataSeeder::class,
         ]);
     }
 }

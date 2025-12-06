@@ -43,7 +43,7 @@ class LazReportController extends Controller
             ->pluck('disbursed_sum', 'program_id');
 
         $perMonth = Application::select(
-            DB::raw("to_char(date_trunc('month', created_at), 'YYYY-MM') as month"),
+            DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month"),
             DB::raw('count(*) as total'),
             DB::raw('sum(requested_amount) as total_requested')
         )

@@ -16,20 +16,24 @@ class EmployeeLoanController extends Controller
 {
     public function index()
     {
+        $unpaidInstallmentsQuery = DB::table('employee_loan_schedules')
+            ->select('employee_loan_id', DB::raw('count(*) as count'))
+            ->where('is_paid', false)
+            ->groupBy('employee_loan_id');
+
         $query = DB::table('employee_loans as el')
             ->join('employees as e', 'e.id', '=', 'el.employee_id')
             ->join('companies as c', 'c.id', '=', 'el.company_id')
-            ->leftJoin('employee_loan_schedules as els', function ($join) {
-                $join->on('els.employee_loan_id', '=', 'el.id')->where('els.is_paid', false);
+            ->leftJoinSub($unpaidInstallmentsQuery, 'els', function ($join) {
+                $join->on('el.id', '=', 'els.employee_loan_id');
             })
             ->select(
                 'el.*',
                 'e.full_name',
                 'e.employee_code',
                 'c.name as company_name',
-                DB::raw('COUNT(els.id) as unpaid_installments')
-            )
-            ->groupBy('el.id', 'e.full_name', 'e.employee_code', 'c.name');
+                DB::raw('COALESCE(els.count, 0) as unpaid_installments')
+            );
 
         if (Auth::user()->company_id) {
             $query->where('el.company_id', Auth::user()->company_id);

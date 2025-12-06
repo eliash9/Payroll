@@ -76,6 +76,8 @@ class ApplicationController extends Controller
             'branch_id' => $validated['branch_id'] ?? $application->branch_id,
         ]);
 
+        $this->sendStatusUpdateEmail($application);
+
         return back()->with('success', 'Status diperbarui');
     }
 
@@ -97,7 +99,21 @@ class ApplicationController extends Controller
         );
 
         $application->update(['status' => 'survey_assigned']);
+        
+        $this->sendStatusUpdateEmail($application);
 
         return back()->with('success', 'Surveyor ditugaskan (ID '.$survey->id.')');
+    }
+
+    private function sendStatusUpdateEmail(Application $application)
+    {
+        if ($application->applicant && $application->applicant->email) {
+            try {
+                \Illuminate\Support\Facades\Mail::to($application->applicant->email)
+                    ->send(new \App\Mail\ApplicationStatusUpdatedMail($application));
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Failed to send status update email: ' . $e->getMessage());
+            }
+        }
     }
 }

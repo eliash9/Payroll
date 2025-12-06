@@ -39,7 +39,8 @@ class PositionController extends Controller
         $data = $request->validate([
             'company_id' => 'required|integer|exists:companies,id',
             'name' => 'required|string|max:191',
-            'grade' => 'nullable|string|max:50',
+            'code' => 'nullable|string|max:50|unique:positions,code',
+            'description' => 'nullable|string',
         ]);
 
         if (Auth::user()->company_id && $data['company_id'] != Auth::user()->company_id) {
@@ -79,7 +80,8 @@ class PositionController extends Controller
         $data = $request->validate([
             'company_id' => 'required|integer|exists:companies,id',
             'name' => 'required|string|max:191',
-            'grade' => 'nullable|string|max:50',
+            'code' => 'nullable|string|max:50|unique:positions,code,' . $id,
+            'description' => 'nullable|string',
         ]);
         
         if (Auth::user()->company_id && $data['company_id'] != Auth::user()->company_id) {
@@ -101,5 +103,36 @@ class PositionController extends Controller
 
         $position->delete();
         return redirect()->route('positions.index')->with('success', 'Jabatan dihapus.');
+    }
+
+    public function export()
+    {
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\PositionExport, 'positions.xlsx');
+    }
+
+    public function importTemplate()
+    {
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\PositionTemplateExport, 'position_template.xlsx');
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,csv',
+        ]);
+
+        try {
+            \Maatwebsite\Excel\Facades\Excel::import(new \App\Imports\PositionImport, $request->file('file'));
+            return redirect()->route('positions.index')->with('success', 'Positions imported successfully.');
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            $failures = $e->failures();
+            $messages = [];
+            foreach ($failures as $failure) {
+                $messages[] = 'Row ' . $failure->row() . ': ' . implode(', ', $failure->errors());
+            }
+            return redirect()->route('positions.index')->with('error', 'Import Validation Errors: ' . implode(' | ', $messages));
+        } catch (\Exception $e) {
+            return redirect()->route('positions.index')->with('error', 'Error importing positions: ' . $e->getMessage());
+        }
     }
 }

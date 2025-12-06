@@ -10,7 +10,16 @@ class Branch extends Model
 {
     use SoftDeletes, HasCompanyScope;
 
-    protected $guarded = ['id'];
+    protected $fillable = [
+        'company_id',
+        'code',
+        'name',
+        'address',
+        'latitude',
+        'longitude',
+        'grade',
+        'phone',
+    ];
 
     public function company()
     {

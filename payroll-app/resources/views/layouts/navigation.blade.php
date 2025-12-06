@@ -164,6 +164,9 @@
                             <x-dropdown-link :href="route('laz.guide')" class="{{ request()->routeIs('laz.guide') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
                                 Panduan
                             </x-dropdown-link>
+                            <x-dropdown-link :href="route('laz.settings.index')" class="{{ request()->routeIs('laz.settings.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
+                                Pengaturan
+                            </x-dropdown-link>
                         </x-slot>
                     </x-dropdown>
                     @endif
@@ -398,6 +401,9 @@
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('laz.guide')" :active="request()->routeIs('laz.guide')" class="ps-6">
                     Panduan
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('laz.settings.index')" :active="request()->routeIs('laz.settings.*')" class="ps-6">
+                    Pengaturan
                 </x-responsive-nav-link>
             </div>
             @endif
