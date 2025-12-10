@@ -55,6 +55,38 @@ class EmployeeController extends Controller
         return view('employees.index', compact('employees', 'q', 'sort', 'sortDir', 'companies'));
     }
 
+    public function customLocations()
+    {
+        $q = request('q');
+        $sort = request('sort', 'full_name');
+        $sortDir = request('dir', 'asc') === 'desc' ? 'desc' : 'asc';
+
+        // Filter employees who have at least one custom work location
+        $query = Employee::whereHas('workLocations')->with('branch');
+
+        if ($q) {
+            $query->where(function ($sub) use ($q) {
+                $sub->where('full_name', 'like', "%{$q}%")
+                    ->orWhere('employee_code', 'like', "%{$q}%");
+            });
+        }
+
+        $query->orderBy('full_name', $sortDir);
+
+        $employees = $query->paginate(20)->withQueryString();
+
+        // reuse index view but we might want a different title or indicate filter is active
+        // For simplicity, reuse index. 
+        
+        $companiesQuery = Company::query();
+        if (Auth::user()->company_id) {
+            $companiesQuery->where('id', Auth::user()->company_id);
+        }
+        $companies = $companiesQuery->pluck('name', 'id');
+
+        return view('employees.index', compact('employees', 'q', 'sort', 'sortDir', 'companies'));
+    }
+
     public function create()
     {
         $companiesQuery = Company::query();
@@ -187,6 +219,9 @@ class EmployeeController extends Controller
         $data['commission_rate'] = $data['commission_rate'] ?? 0;
         
         $employee->update($data);
+
+        // Sync Work Locations
+        $employee->workLocations()->sync($request->input('work_locations', []));
 
         return redirect()->route('employees.index')->with('success', 'Employee updated');
     }

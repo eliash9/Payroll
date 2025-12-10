@@ -59,6 +59,9 @@
                             <x-dropdown-link :href="route('shifts.index')" class="{{ request()->routeIs('shifts.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
                                 Shift
                             </x-dropdown-link>
+                            <x-dropdown-link :href="route('work-locations.index')" class="{{ request()->routeIs('work-locations.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
+                                Lokasi Kerja Custom
+                            </x-dropdown-link>
                             <x-dropdown-link :href="route('leave-types.index')" class="{{ request()->routeIs('leave-types.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
                                 Jenis Cuti/Izin
                             </x-dropdown-link>
@@ -92,6 +95,9 @@
                         <x-slot name="content">
                             <x-dropdown-link :href="route('employees.index')" class="{{ request()->routeIs('employees.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
                                 Karyawan
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('employees.custom-locations')" class="{{ request()->routeIs('employees.custom-locations') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
+                                Karyawan Lokasi Custom
                             </x-dropdown-link>
                             <x-dropdown-link :href="route('employee-kpi.index')" class="{{ request()->routeIs('employee-kpi.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
                                 KPI Karyawan
@@ -151,6 +157,9 @@
                             </x-dropdown-link>
                             <x-dropdown-link :href="route('laz.surveys.index')" class="{{ request()->routeIs('laz.surveys.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
                                 Survey
+                            </x-dropdown-link>
+                            <x-dropdown-link :href="route('laz.survey-templates.index')" class="{{ request()->routeIs('laz.survey-templates.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
+                                Template Survey
                             </x-dropdown-link>
                             <x-dropdown-link :href="route('laz.approvals.index')" class="{{ request()->routeIs('laz.approvals.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
                                 Persetujuan
@@ -301,6 +310,9 @@
                 <x-responsive-nav-link :href="route('positions.index')" :active="request()->routeIs('positions.*')" class="ps-6">
                     Jabatan
                 </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('work-locations.index')" :active="request()->routeIs('work-locations.*')" class="ps-6">
+                    Lokasi Kerja Custom
+                </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('shifts.index')" :active="request()->routeIs('shifts.*')" class="ps-6">
                     Shift
                 </x-responsive-nav-link>
@@ -330,6 +342,9 @@
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('employees.index')" :active="request()->routeIs('employees.*')" class="ps-6">
                     Karyawan
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('employees.custom-locations')" :active="request()->routeIs('employees.custom-locations')" class="ps-6">
+                    Karyawan Lokasi Custom
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('employee-kpi.index')" :active="request()->routeIs('employee-kpi.*')" class="ps-6">
                     KPI Karyawan
@@ -389,6 +404,9 @@
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('laz.surveys.index')" :active="request()->routeIs('laz.surveys.*')" class="ps-6">
                     Survey
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('laz.survey-templates.index')" :active="request()->routeIs('laz.survey-templates.*')" class="ps-6">
+                    Template Survey
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('laz.approvals.index')" :active="request()->routeIs('laz.approvals.*')" class="ps-6">
                     Persetujuan

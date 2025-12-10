@@ -7,6 +7,10 @@ interface User {
     id: number;
     name: string;
     email: string;
+    position?: { name: string };
+    department?: { name: string };
+    branch?: { name: string };
+    is_volunteer?: boolean;
     // Add other fields as needed
 }
 
@@ -15,15 +19,17 @@ export const useAuthStore = defineStore('auth', () => {
     const user = ref<User | null>(null);
     const isAuthenticated = computed(() => !!token.value);
 
-    async function login(email: string, password: string) {
+    async function login(login_id: string, password: string) {
         try {
             // 1. Get CSRF cookie first (Sanctum)
             // Note: csrf-cookie is usually at root, not under /api
-            await api.get('http://localhost:8000/sanctum/csrf-cookie');
+            const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+            const rootURL = baseURL.replace(/\/api\/?$/, ''); // Remove trailing /api or /api/
+            await api.get(`${rootURL}/sanctum/csrf-cookie`);
 
             // 2. Login to get token
             const response = await api.post('/auth/token', {
-                email,
+                login_id,
                 password,
                 device_name: 'laz-employee-pwa'
             });
@@ -44,9 +50,12 @@ export const useAuthStore = defineStore('auth', () => {
     async function fetchUser() {
         if (!token.value) return;
         try {
-            // The endpoint is /api/user, but axios base URL is /api, so we request /user
-            const response = await api.get('/user');
-            user.value = response.data;
+            // Fetch detailed employee profile instead of just user
+            // The endpoint is /api/employee/profile
+            const response = await api.get('/employee/profile');
+            // The API returns { user: {...}, employee: {...} }
+            // We'll flatten it or store it as is. For simplicity let's store the combined object
+            user.value = { ...response.data.user, ...response.data.employee };
         } catch (error) {
             console.error('Fetch user failed', error);
             logout();

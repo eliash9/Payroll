@@ -49,12 +49,12 @@ const formatCurrency = (val: number) => {
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Nama Donatur</label>
-          <input v-model="form.donor_name" type="text" required class="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500" />
+          <input v-model="form.donor_name" type="text" required class="input-soft" />
         </div>
 
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Donasi</label>
-          <select v-model="form.type" class="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500">
+          <select v-model="form.type" class="input-soft">
             <option value="zakat">Zakat</option>
             <option value="infaq">Infaq</option>
             <option value="sadaqah">Sadaqah</option>
@@ -64,18 +64,18 @@ const formatCurrency = (val: number) => {
 
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Jumlah (Rp)</label>
-          <input v-model="form.amount" type="number" min="1000" required class="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500" />
+          <input v-model="form.amount" type="number" min="1000" required class="input-soft" />
         </div>
 
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Catatan (Opsional)</label>
-          <textarea v-model="form.notes" rows="2" class="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"></textarea>
+          <textarea v-model="form.notes" rows="2" class="input-soft"></textarea>
         </div>
 
         <button 
           type="submit" 
           :disabled="store.isLoading"
-          class="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
+          class="btn-primary-soft"
         >
           {{ store.isLoading ? 'Menyimpan...' : 'Simpan Transaksi' }}
         </button>

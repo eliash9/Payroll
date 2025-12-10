@@ -51,4 +51,8 @@ class Employee extends Model
     {
         return $this->hasMany(FundraisingDailySummary::class, 'fundraiser_id');
     }
+    public function workLocations()
+    {
+        return $this->belongsToMany(WorkLocation::class, 'employee_work_location');
+    }
 }

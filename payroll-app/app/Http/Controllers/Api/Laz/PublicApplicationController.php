@@ -11,8 +11,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
+use App\Traits\LazWhatsAppSender;
+
 class PublicApplicationController extends Controller
 {
+    use LazWhatsAppSender;
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -96,8 +100,30 @@ class PublicApplicationController extends Controller
                 try {
                     \Illuminate\Support\Facades\Mail::to($applicant->email)->send(new \App\Mail\ApplicationCreatedMail($application));
                 } catch (\Exception $e) {
-                    // Log error but don't fail the transaction
                     \Illuminate\Support\Facades\Log::error('Failed to send application created email: ' . $e->getMessage());
+                }
+            }
+
+            // WhatsApp Notification
+            if ($applicant->phone) {
+                try {
+                    $template = \App\Models\LazSetting::where('key', 'email_new_request_body')->value('value') 
+                        ?? "Halo {applicant_name},\n\nTerima kasih telah mengajukan permohonan bantuan.\nKode Tiket Anda: {code}\nProgram: {program_name}\nTanggal: {date}\n\nMohon simpan kode tiket ini untuk pengecekan status.\n\nSalam,\nTim LAZ";
+                    
+                    $message = str_replace(
+                        ['{applicant_name}', '{code}', '{program_name}', '{date}'],
+                        [
+                            $applicant->full_name,
+                            $application->code,
+                            $application->program->name ?? '-',
+                            $application->created_at->format('d-m-Y')
+                        ],
+                        $template
+                    );
+
+                    $this->sendWhatsAppMessage($applicant->phone, $message);
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error('Failed to send application created WA: ' . $e->getMessage());
                 }
             }
 

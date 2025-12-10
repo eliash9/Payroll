@@ -13,8 +13,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
+use App\Traits\LazWhatsAppSender;
+
 class ApplicationController extends Controller
 {
+    use LazWhatsAppSender;
+
     public function index(Request $request): View
     {
         $query = Application::with(['program', 'period', 'applicant', 'organization', 'branch'])
@@ -28,6 +32,12 @@ class ApplicationController extends Controller
             ->when($request->status, fn ($q, $status) => $q->where('status', $status))
             ->when($request->branch_id, fn ($q, $id) => $q->where('branch_id', $id))
             ->when($request->period_id, fn ($q, $id) => $q->where('program_period_id', $id))
+            ->when($request->search, function ($q, $search) {
+                $q->where(function ($sq) use ($search) {
+                    $sq->where('code', 'like', "%{$search}%")
+                        ->orWhereHas('applicant', fn ($aq) => $aq->where('full_name', 'like', "%{$search}%")->orWhere('national_id', 'like', "%{$search}%"));
+                });
+            })
             ->when($request->date_from, fn ($q, $date) => $q->whereDate('created_at', '>=', $date))
             ->when($request->date_to, fn ($q, $date) => $q->whereDate('created_at', '<=', $date));
 
@@ -76,7 +86,7 @@ class ApplicationController extends Controller
             'branch_id' => $validated['branch_id'] ?? $application->branch_id,
         ]);
 
-        $this->sendStatusUpdateEmail($application);
+        $this->sendNotifications($application);
 
         return back()->with('success', 'Status diperbarui');
     }
@@ -100,19 +110,46 @@ class ApplicationController extends Controller
 
         $application->update(['status' => 'survey_assigned']);
         
-        $this->sendStatusUpdateEmail($application);
+        $this->sendNotifications($application);
 
         return back()->with('success', 'Surveyor ditugaskan (ID '.$survey->id.')');
     }
 
-    private function sendStatusUpdateEmail(Application $application)
+    /**
+     * Send email and WhatsApp notifications
+     */
+    private function sendNotifications(Application $application)
     {
+        // 1. Email
         if ($application->applicant && $application->applicant->email) {
             try {
                 \Illuminate\Support\Facades\Mail::to($application->applicant->email)
                     ->send(new \App\Mail\ApplicationStatusUpdatedMail($application));
             } catch (\Exception $e) {
                 \Illuminate\Support\Facades\Log::error('Failed to send status update email: ' . $e->getMessage());
+            }
+        }
+
+        // 2. WhatsApp
+        if ($application->applicant && $application->applicant->phone) {
+            try {
+                $template = \App\Models\LazSetting::where('key', 'email_status_update_body')->value('value') 
+                    ?? "Halo {applicant_name},\n\nStatus permohonan bantuan Anda ({code}) telah diperbarui menjadi: {status}.\n\nSalam,\nTim LAZ";
+                
+                $message = str_replace(
+                    ['{applicant_name}', '{code}', '{status}', '{program_name}'],
+                    [
+                        $application->applicant->full_name,
+                        $application->code,
+                        $application->status,
+                        $application->program->name ?? '-'
+                    ],
+                    $template
+                );
+
+                $this->sendWhatsAppMessage($application->applicant->phone, $message);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Failed to send status update WA: ' . $e->getMessage());
             }
         }
     }

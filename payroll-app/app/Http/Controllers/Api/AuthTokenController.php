@@ -16,16 +16,28 @@ class AuthTokenController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'email' => ['required', 'email'],
+            'login_id' => ['required', 'string'],
             'password' => ['required', 'string'],
             'device_name' => ['nullable', 'string', 'max:191'],
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $loginId = $request->login_id;
+
+        // Determine if loginId is email
+        $user = null;
+        if (filter_var($loginId, FILTER_VALIDATE_EMAIL)) {
+            $user = User::where('email', $loginId)->first();
+        } else {
+            // Treat as employee code
+            $employee = \App\Models\Employee::where('employee_code', $loginId)->first();
+            if ($employee && $employee->email) {
+                $user = User::where('email', $employee->email)->first();
+            }
+        }
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
+                'login_id' => ['Kredensial yang diberikan salah.'],
             ]);
         }
 

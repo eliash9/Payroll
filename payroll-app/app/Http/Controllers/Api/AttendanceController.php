@@ -10,6 +10,39 @@ use Carbon\Carbon;
 
 class AttendanceController extends Controller
 {
+    public function allowedLocations(Request $request)
+    {
+        $user = Auth::user();
+        $employee = $user->employee;
+
+        if (!$employee) {
+            return response()->json(['message' => 'Employee record not found'], 404);
+        }
+
+        $locations = [];
+        // Branch
+        if ($employee->branch) {
+            $locations[] = [
+                'name' => $employee->branch->name . ' (Cabang)',
+                'latitude' => $employee->branch->latitude,
+                'longitude' => $employee->branch->longitude,
+                'radius' => 5000 // default branch radius
+            ];
+        }
+
+        // Custom Locations
+        foreach ($employee->workLocations as $loc) {
+            $locations[] = [
+                'name' => $loc->name,
+                'latitude' => $loc->latitude,
+                'longitude' => $loc->longitude,
+                'radius' => $loc->radius
+            ];
+        }
+
+        return response()->json(['data' => $locations]);
+    }
+
     public function clockIn(Request $request)
     {
         $request->validate([
@@ -23,6 +56,34 @@ class AttendanceController extends Controller
 
         if (!$employee) {
             return response()->json(['message' => 'Employee record not found'], 404);
+        }
+
+        // Validate Location (Branch Radius OR Custom Work Locations)
+        $isValidLocation = false;
+        $maxRadius = 5000; // Default Branch Radius
+        
+        // 1. Check Branch Location
+        if ($employee->branch && $employee->branch->latitude && $employee->branch->longitude) {
+            $dist = $this->calculateDistance($request->latitude, $request->longitude, $employee->branch->latitude, $employee->branch->longitude);
+            if ($dist <= $maxRadius) {
+                $isValidLocation = true;
+            }
+        }
+
+        // 2. Check Custom Work Locations
+        if (!$isValidLocation) {
+            $customLocations = $employee->workLocations; // Assuming relationship is loaded or accessible
+            foreach ($customLocations as $loc) {
+                $dist = $this->calculateDistance($request->latitude, $request->longitude, $loc->latitude, $loc->longitude);
+                if ($dist <= $loc->radius) {
+                    $isValidLocation = true;
+                    break;
+                }
+            }
+        }
+
+        if (!$isValidLocation) {
+            return response()->json(['message' => 'Anda berada di luar jangkauan lokasi kerja (Cabang / Lokasi Custom).'], 403);
         }
 
         $timestamp = Carbon::parse($request->timestamp)->setTimezone('Asia/Jakarta');
@@ -132,6 +193,30 @@ class AttendanceController extends Controller
         return response()->json(['data' => $logs]);
     }
 
+    public function summary(Request $request)
+    {
+        $user = Auth::user();
+        $employee = $user->employee;
+
+        if (!$employee) {
+            return response()->json(['message' => 'Employee record not found'], 404);
+        }
+
+        $query = \App\Models\AttendanceSummary::where('employee_id', $employee->id);
+
+        if ($request->has('month') && $request->has('year')) {
+            $query->whereMonth('work_date', $request->month)
+                  ->whereYear('work_date', $request->year);
+        } else {
+             $query->whereMonth('work_date', now()->month)
+                   ->whereYear('work_date', now()->year);
+        }
+
+        $summaries = $query->orderBy('work_date', 'desc')->get();
+
+        return response()->json(['data' => $summaries]);
+    }
+
     private function updateDailySummary($employeeId, $date)
     {
         $logs = AttendanceLog::where('employee_id', $employeeId)
@@ -174,5 +259,16 @@ class AttendanceController extends Controller
                 // 'shift_id' => ... (would need shift logic here)
             ]
         );
+    }
+
+    private function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        $theta = $lon1 - $lon2;
+        $dist = sin(deg2rad($lat1)) * sin(deg2rad($lat2)) +  cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * cos(deg2rad($theta));
+        $dist = acos($dist);
+        $dist = rad2deg($dist);
+        $miles = $dist * 60 * 1.1515;
+        $meters = $miles * 1609.344;
+        return $meters;
     }
 }

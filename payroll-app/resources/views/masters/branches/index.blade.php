@@ -48,12 +48,25 @@
                 {{ session('error') }}
             </div>
         @endif
+        
+        <div class="mb-4">
+            <form method="get" action="{{ route('branches.index') }}" class="flex gap-2">
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari Kode atau Nama Cabang..." class="border rounded px-3 py-2 w-full sm:w-64 text-sm" />
+                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded text-sm hover:bg-indigo-700 transition">Cari</button>
+                @if(request('search'))
+                    <a href="{{ route('branches.index') }}" class="bg-gray-200 text-gray-700 px-4 py-2 rounded text-sm hover:bg-gray-300 transition flex items-center">Reset</a>
+                @endif
+            </form>
+        </div>
+
         <div class="bg-white shadow-sm rounded p-4 overflow-x-auto">
             <table class="min-w-full text-sm">
                 <thead>
                 <tr class="bg-slate-100 text-left">
+                    <th class="px-3 py-2 w-12">No</th>
                     <th class="px-3 py-2">Kode</th>
                     <th class="px-3 py-2">Nama</th>
+                    <th class="px-3 py-2">Wilayah</th>
                     <th class="px-3 py-2">Telepon</th>
                     <th class="px-3 py-2">Lat / Long</th>
                     <th class="px-3 py-2">Grade</th>
@@ -61,14 +74,29 @@
                 </tr>
                 </thead>
                 <tbody>
-                @forelse($branches as $branch)
+                @forelse($branches as $index => $branch)
                     <tr class="border-t">
+                        <td class="px-3 py-2 text-center">{{ $branches->firstItem() + $index }}</td>
                         <td class="px-3 py-2">{{ $branch->code }}</td>
-                        <td class="px-3 py-2">{{ $branch->name }}</td>
+                        <td class="px-3 py-2">
+                            {{ $branch->name }}
+                            @if($branch->is_headquarters)
+                                <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded ml-2">Induk</span>
+                            @endif
+                        </td>
+                        <td class="px-3 py-2">
+                            <div class="text-xs">
+                                <div>{{ $branch->city_name }}</div>
+                                <div class="text-gray-500">{{ $branch->province_name }}</div>
+                            </div>
+                        </td>
                         <td class="px-3 py-2">{{ $branch->phone }}</td>
                         <td class="px-3 py-2">
                             @if($branch->latitude && $branch->longitude)
-                                {{ $branch->latitude }}, {{ $branch->longitude }}
+                                <div class="text-xs">
+                                    <div>{{ Str::limit($branch->latitude, 8) }}</div>
+                                    <div>{{ Str::limit($branch->longitude, 8) }}</div>
+                                </div>
                             @else
                                 -
                             @endif
@@ -84,7 +112,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="6" class="px-3 py-4 text-center text-slate-500">Belum ada data</td></tr>
+                    <tr><td colspan="8" class="px-3 py-4 text-center text-slate-500">Belum ada data</td></tr>
                 @endforelse
                 </tbody>
             </table>

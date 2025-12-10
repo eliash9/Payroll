@@ -222,77 +222,31 @@
                                         <p class="text-sm text-slate-500 italic">Menunggu verifikasi admin.</p>
                                     @endif
 
-                                <!-- 2. Survey Assigned -> Input Survey -->
-                                @elseif ($application->status === 'survey_assigned')
+                                    @elseif ($application->status === 'survey_assigned')
                                     @if ($user->hasRole(['super_admin','admin_pusat','admin_cabang','surveyor']))
                                         <div class="space-y-4">
                                             <p class="text-sm text-slate-600">Surveyor telah ditugaskan. Silakan input hasil survey lapangan.</p>
                                             
-                                            <form method="POST" action="{{ route('laz.surveys.store', $application) }}" enctype="multipart/form-data" class="space-y-3">
-                                                @csrf
-                                                {{-- Try to find pending survey to update correct record --}}
-                                                @php
-                                                    $pendingSurvey = $application->surveys->whereNull('recommendation')->first();
-                                                @endphp
-                                                @if($pendingSurvey)
-                                                    <input type="hidden" name="surveyor_id" value="{{ $pendingSurvey->surveyor_id }}">
-                                                @endif
-
-                                                <div class="grid grid-cols-2 gap-3">
-                                                    <div>
-                                                        <label class="text-xs font-semibold text-slate-700 uppercase">Tanggal Survey</label>
-                                                        <input type="date" name="survey_date" class="mt-1 w-full border-slate-300 rounded-lg text-sm" required>
+                                            <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-4">
+                                                <div class="flex items-start">
+                                                    <div class="flex-shrink-0">
+                                                        <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                                        </svg>
                                                     </div>
-                                                    <div>
-                                                        <label class="text-xs font-semibold text-slate-700 uppercase">Metode</label>
-                                                        <select name="method" class="mt-1 w-full border-slate-300 rounded-lg text-sm">
-                                                            <option value="onsite">Kunjungan (Onsite)</option>
-                                                            <option value="online">Online / Video Call</option>
-                                                            <option value="phone">Telepon</option>
-                                                        </select>
+                                                    <div class="ml-3 w-full">
+                                                        <h3 class="text-sm font-medium text-indigo-800">Mulai Survey Lapangan</h3>
+                                                        <div class="mt-2 text-sm text-indigo-700">
+                                                            <p>Proses survey menggunakan formulir dinamis sesuai program <strong>{{ $application->program->name }}</strong>.</p>
+                                                        </div>
+                                                        <div class="mt-4">
+                                                            <a href="{{ route('laz.surveys.create', $application) }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full justify-center text-center">
+                                                                Isi Formulir Survey
+                                                            </a>
+                                                        </div>
                                                     </div>
                                                 </div>
-
-                                                <div>
-                                                    <label class="text-xs font-semibold text-slate-700 uppercase">Skor Ekonomi (1-5)</label>
-                                                    <div class="flex gap-4 mt-1">
-                                                        @foreach(range(1, 5) as $score)
-                                                            <label class="flex items-center gap-1 cursor-pointer">
-                                                                <input type="radio" name="economic_condition_score" value="{{ $score }}" class="text-emerald-600 focus:ring-emerald-500" {{ $score === 3 ? 'checked' : '' }}>
-                                                                <span class="text-sm text-slate-700">{{ $score }}</span>
-                                                            </label>
-                                                        @endforeach
-                                                    </div>
-                                                </div>
-
-                                                <div>
-                                                    <label class="text-xs font-semibold text-slate-700 uppercase">Rekomendasi</label>
-                                                    <select name="recommendation" class="mt-1 w-full border-slate-300 rounded-lg text-sm">
-                                                        <option value="eligible">Layak (Eligible)</option>
-                                                        <option value="not_eligible">Tidak Layak</option>
-                                                        <option value="need_revision">Perlu Revisi</option>
-                                                    </select>
-                                                </div>
-
-                                                <div>
-                                                    <label class="text-xs font-semibold text-slate-700 uppercase">Ringkasan Temuan</label>
-                                                    <textarea name="summary" rows="3" class="mt-1 w-full border-slate-300 rounded-lg text-sm" placeholder="Jelaskan kondisi pemohon..." required></textarea>
-                                                </div>
-
-                                                <div>
-                                                    <label class="text-xs font-semibold text-slate-700 uppercase">Catatan Tambahan</label>
-                                                    <textarea name="notes" rows="2" class="mt-1 w-full border-slate-300 rounded-lg text-sm" placeholder="Opsional"></textarea>
-                                                </div>
-
-                                                <div>
-                                                    <label class="text-xs font-semibold text-slate-700 uppercase">Foto Lokasi</label>
-                                                    <input type="file" name="photos[]" multiple class="mt-1 w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
-                                                </div>
-
-                                                <button class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors">
-                                                    Simpan Hasil Survey
-                                                </button>
-                                            </form>
+                                            </div>
                                         </div>
                                     @else
                                         <p class="text-sm text-slate-500 italic">Menunggu hasil survey.</p>
@@ -394,7 +348,10 @@
                                                 <div class="font-bold text-slate-900 text-sm">Survey Lapangan</div>
                                                 <time class="font-caveat font-medium text-indigo-500 text-xs">{{ $survey->created_at->format('d M Y') }}</time>
                                             </div>
-                                            <div class="text-slate-500 text-xs">Surveyor: {{ $survey->surveyor->name }}<br>Rekomendasi: {{ $survey->recommendation }}</div>
+                                            <div class="text-slate-500 text-xs">Surveyor: {{ $survey->surveyor->name ?? 'Unknown' }}<br>Rekomendasi: {{ $survey->recommendation }}</div>
+                                            <div class="mt-2">
+                                                <a href="{{ route('laz.surveys.show', $survey) }}" class="text-indigo-600 hover:text-indigo-800 text-xs font-medium underline">Lihat Detail Laporan</a>
+                                            </div>
                                             @if($survey->photos->count() > 0)
                                                 <div class="mt-2 grid grid-cols-3 gap-2">
                                                     @foreach($survey->photos as $photo)

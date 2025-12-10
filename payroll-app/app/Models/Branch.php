@@ -12,6 +12,7 @@ class Branch extends Model
 
     protected $fillable = [
         'company_id',
+        'is_headquarters',
         'code',
         'name',
         'address',
@@ -19,6 +20,14 @@ class Branch extends Model
         'longitude',
         'grade',
         'phone',
+        'province_code',
+        'province_name',
+        'city_code',
+        'city_name',
+        'district_code',
+        'district_name',
+        'village_code',
+        'village_name',
     ];
 
     public function company()

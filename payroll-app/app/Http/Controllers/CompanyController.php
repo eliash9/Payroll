@@ -30,6 +30,16 @@ class CompanyController extends Controller
             'phone' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:191',
             'npwp' => 'nullable|string|max:64',
+            'province_code' => 'nullable|string',
+            'province_name' => 'nullable|string',
+            'city_code' => 'nullable|string',
+            'city_name' => 'nullable|string',
+            'district_code' => 'nullable|string',
+            'district_name' => 'nullable|string',
+            'village_code' => 'nullable|string',
+            'village_name' => 'nullable|string',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
         ]);
 
         $now = now();
@@ -38,7 +48,7 @@ class CompanyController extends Controller
             'updated_at' => $now,
         ]));
 
-        return redirect()->route('companies.index')->with('success', 'Perusahaan ditambahkan.');
+        return redirect()->route('companies.index')->with('success', 'Instansi ditambahkan.');
     }
 
     public function edit(int $id)
@@ -62,17 +72,27 @@ class CompanyController extends Controller
             'phone' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:191',
             'npwp' => 'nullable|string|max:64',
+            'province_code' => 'nullable|string',
+            'province_name' => 'nullable|string',
+            'city_code' => 'nullable|string',
+            'city_name' => 'nullable|string',
+            'district_code' => 'nullable|string',
+            'district_name' => 'nullable|string',
+            'village_code' => 'nullable|string',
+            'village_name' => 'nullable|string',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
         ]);
 
         $data['updated_at'] = now();
         DB::table('companies')->where('id', $id)->update($data);
 
-        return redirect()->route('companies.index')->with('success', 'Perusahaan diperbarui.');
+        return redirect()->route('companies.index')->with('success', 'Instansi diperbarui.');
     }
 
     public function destroy(int $id)
     {
         DB::table('companies')->where('id', $id)->delete();
-        return redirect()->route('companies.index')->with('success', 'Perusahaan dihapus.');
+        return redirect()->route('companies.index')->with('success', 'Instansi dihapus.');
     }
 }

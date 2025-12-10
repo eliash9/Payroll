@@ -1,16 +1,27 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router';
 import { Home, MapPin, HandCoins, User } from 'lucide-vue-next';
+import { computed } from 'vue';
+import { useAuthStore } from '../stores/auth'; // Import store to check volunteer status
 
 const router = useRouter();
 const route = useRoute();
+const authStore = useAuthStore(); // Access auth store
 
-const navItems = [
-  { name: 'Home', path: '/', icon: Home },
-  { name: 'Absen', path: '/attendance', icon: MapPin },
-  { name: 'Donasi', path: '/fundraising', icon: HandCoins },
-  { name: 'Profil', path: '/profile', icon: User },
-];
+const navItems = computed(() => {
+  const items = [
+    { name: 'Home', path: '/', icon: Home },
+    { name: 'Absen', path: '/attendance', icon: MapPin },
+    { name: 'Donasi', path: '/fundraising', icon: HandCoins },
+    { name: 'Profil', path: '/profile', icon: User },
+  ];
+
+  // Hide 'Donasi' if user is not a volunteer
+  if (!authStore.user?.is_volunteer) {
+    return items.filter(i => i.path !== '/fundraising');
+  }
+  return items;
+});
 
 const navigate = (path: string) => {
   router.push(path);
@@ -29,7 +40,7 @@ const isActive = (path: string) => {
         :key="item.name"
         @click="navigate(item.path)"
         class="flex flex-col items-center justify-center w-full h-full space-y-1"
-        :class="isActive(item.path) ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'"
+        :class="isActive(item.path) ? 'text-primary' : 'text-gray-500 hover:text-gray-700'"
       >
         <component :is="item.icon" class="w-6 h-6" />
         <span class="text-xs font-medium">{{ item.name }}</span>

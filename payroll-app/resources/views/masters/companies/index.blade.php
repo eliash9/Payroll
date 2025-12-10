@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Perusahaan</h2>
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Instansi</h2>
             <a href="{{ route('companies.create') }}" class="bg-blue-600 text-white px-3 py-1 rounded text-sm">Tambah</a>
         </div>
     </x-slot>
@@ -17,7 +17,7 @@
                 <thead>
                 <tr class="bg-slate-100 text-left">
                     <th class="px-3 py-2">Kode</th>
-                    <th class="px-3 py-2">Nama</th>
+                    <th class="px-3 py-2">Nama Instansi</th>
                     <th class="px-3 py-2">Kontak</th>
                     <th class="px-3 py-2">NPWP</th>
                     <th class="px-3 py-2">Aksi</th>
@@ -38,7 +38,7 @@
                             <form method="post" action="{{ route('companies.destroy', $company->id) }}" class="inline">
                                 @csrf
                                 @method('delete')
-                                <button class="text-red-600 underline" onclick="return confirm('Hapus perusahaan?')">Hapus</button>
+                                <button class="text-red-600 underline" onclick="return confirm('Hapus Instansi?')">Hapus</button>
                             </form>
                         </td>
                     </tr>

@@ -57,6 +57,23 @@ Route::middleware(['auth:sanctum', 'company.scope'])->group(function () {
     Route::post('/attendance/clock-in', [\App\Http\Controllers\Api\AttendanceController::class, 'clockIn']);
     Route::post('/attendance/clock-out', [\App\Http\Controllers\Api\AttendanceController::class, 'clockOut']);
     Route::get('/attendance/history', [\App\Http\Controllers\Api\AttendanceController::class, 'history']);
+    Route::get('/attendance/summary', [\App\Http\Controllers\Api\AttendanceController::class, 'summary']);
+    Route::get('/attendance/allowed-locations', [\App\Http\Controllers\Api\AttendanceController::class, 'allowedLocations']);
+
+    // Leave & Overtime
+    Route::get('/leave/types', [\App\Http\Controllers\Api\LeaveOvertimeController::class, 'getLeaveTypes']);
+    Route::get('/leave/requests', [\App\Http\Controllers\Api\LeaveOvertimeController::class, 'getLeaves']);
+    Route::post('/leave/requests', [\App\Http\Controllers\Api\LeaveOvertimeController::class, 'storeLeave']);
+    
+    Route::get('/overtime/requests', [\App\Http\Controllers\Api\LeaveOvertimeController::class, 'getOvertimes']);
+    Route::post('/overtime/requests', [\App\Http\Controllers\Api\LeaveOvertimeController::class, 'storeOvertime']);
+
+    // Volunteer Dashboard
+    Route::get('/volunteer/dashboard', [\App\Http\Controllers\Api\Laz\VolunteerDashboardController::class, 'index']);
+
+    // Expense Claims
+    Route::get('/pwa/expense-claims', [\App\Http\Controllers\Api\ExpenseClaimUiController::class, 'index']);
+    Route::post('/pwa/expense-claims', [\App\Http\Controllers\Api\ExpenseClaimUiController::class, 'store']);
     
     Route::get('/employee/profile', [\App\Http\Controllers\Api\EmployeeController::class, 'profile']);
     Route::get('/employee/salary-slip', [\App\Http\Controllers\Api\EmployeeController::class, 'salarySlip']);

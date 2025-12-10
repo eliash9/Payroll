@@ -213,6 +213,21 @@
                         </div>
                     </div>
 
+                    <div class="pt-4 border-t">
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Lokasi Kerja Custom (Opsional)</label>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-2 border rounded p-3 max-h-48 overflow-y-auto">
+                            @foreach(\App\Models\WorkLocation::all() as $loc)
+                                <label class="flex items-center space-x-2 text-sm">
+                                    <input type="checkbox" name="work_locations[]" value="{{ $loc->id }}"
+                                        @checked($employee->workLocations->contains($loc->id))
+                                        class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                    <span>{{ $loc->name }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">Karyawan dapat melakukan absensi di lokasi ini selain di Cabang utama.</p>
+                    </div>
+
                     <div class="flex items-center gap-2 pt-4">
                         <input type="checkbox" name="is_volunteer" value="1" id="is_volunteer" @checked(old('is_volunteer', $employee->is_volunteer)) class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
                         <label for="is_volunteer" class="text-sm font-medium text-slate-700">Tandai sebagai Relawan / Fundraiser</label>

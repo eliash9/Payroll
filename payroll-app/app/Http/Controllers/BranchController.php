@@ -20,7 +20,14 @@ class BranchController extends Controller
             $query->where('company_id', Auth::user()->company_id);
         }
 
-        $branches = $query->orderBy('name')->paginate(20);
+        if ($search = request('search')) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('code', 'like', "%{$search}%");
+            });
+        }
+
+        $branches = $query->orderBy('name')->paginate(20)->withQueryString();
 
         return view('masters.branches.index', compact('branches'));
     }
@@ -47,6 +54,15 @@ class BranchController extends Controller
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
             'grade' => 'nullable|string|max:50',
+            'province_code' => 'nullable|string',
+            'province_name' => 'nullable|string',
+            'city_code' => 'nullable|string',
+            'city_name' => 'nullable|string',
+            'district_code' => 'nullable|string',
+            'district_name' => 'nullable|string',
+            'village_code' => 'nullable|string',
+            'village_name' => 'nullable|string',
+            'is_headquarters' => 'nullable|boolean',
         ]);
 
         if (Auth::user()->company_id && $data['company_id'] != Auth::user()->company_id) {
@@ -92,6 +108,15 @@ class BranchController extends Controller
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
             'grade' => 'nullable|string|max:50',
+            'province_code' => 'nullable|string',
+            'province_name' => 'nullable|string',
+            'city_code' => 'nullable|string',
+            'city_name' => 'nullable|string',
+            'district_code' => 'nullable|string',
+            'district_name' => 'nullable|string',
+            'village_code' => 'nullable|string',
+            'village_name' => 'nullable|string',
+            'is_headquarters' => 'nullable|boolean',
         ]);
         
         if (Auth::user()->company_id && $data['company_id'] != Auth::user()->company_id) {

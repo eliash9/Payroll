@@ -12,12 +12,14 @@ class Survey extends Model
     protected $fillable = [
         'application_id',
         'surveyor_id',
+        'survey_template_id',
         'survey_date',
         'method',
         'summary',
         'economic_condition_score',
         'recommendation',
         'notes',
+        'total_score',
     ];
 
     protected $casts = [
@@ -32,6 +34,16 @@ class Survey extends Model
     public function surveyor()
     {
         return $this->belongsTo(User::class, 'surveyor_id');
+    }
+
+    public function template()
+    {
+        return $this->belongsTo(SurveyTemplate::class, 'survey_template_id');
+    }
+
+    public function responses()
+    {
+        return $this->hasMany(SurveyResponse::class);
     }
 
     public function photos()

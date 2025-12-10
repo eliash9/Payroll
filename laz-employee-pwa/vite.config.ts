@@ -10,12 +10,16 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      includeAssets: ['favicon.png', 'apple-touch-icon.png'],
       manifest: {
-        name: 'LAZ Employee App',
-        short_name: 'LAZ Employee',
+        name: 'MyLAZ',
+        short_name: 'MyLAZ',
         description: 'Offline-first employee application for attendance and fundraising',
-        theme_color: '#ffffff',
+        theme_color: '#2b5f70',
+        start_url: '/',
+        scope: '/',
+        display: 'standalone',
+        background_color: '#ffffff',
         icons: [
           {
             src: 'pwa-192x192.png',

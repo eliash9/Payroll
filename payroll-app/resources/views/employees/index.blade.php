@@ -1,7 +1,9 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center justify-between" x-data="{ showImportModal: false }">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Karyawan</h2>
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                {{ request()->routeIs('employees.custom-locations') ? 'Karyawan Lokasi Custom' : 'Karyawan' }}
+            </h2>
             <div class="flex items-center gap-2">
                 <a href="{{ route('employees.export') }}" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">Export</a>
                 <button @click="showImportModal = true" class="bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700">Import</button>
@@ -80,6 +82,9 @@
                     <th class="px-3 py-2">Status</th>
                     <th class="px-3 py-2">Relawan?</th>
                     <th class="px-3 py-2">Gaji Pokok</th>
+                    @if(request()->routeIs('employees.custom-locations'))
+                        <th class="px-3 py-2">Lokasi Custom</th>
+                    @endif
                     <th class="px-3 py-2">Per Jam</th>
                     <th class="px-3 py-2">Komisi %</th>
                     <th class="px-3 py-2">Aksi</th>
@@ -94,6 +99,11 @@
                         <td class="px-3 py-2">{{ ucfirst($emp->status) }}</td>
                         <td class="px-3 py-2">{{ $emp->is_volunteer ? 'Ya' : 'Tidak' }}</td>
                         <td class="px-3 py-2 text-right">Rp {{ number_format($emp->basic_salary,0,',','.') }}</td>
+                        @if(request()->routeIs('employees.custom-locations'))
+                            <td class="px-3 py-2 text-xs">
+                                {{ $emp->workLocations->pluck('name')->join(', ') }}
+                            </td>
+                        @endif
                         <td class="px-3 py-2 text-right">Rp {{ number_format($emp->hourly_rate,0,',','.') }}</td>
                         <td class="px-3 py-2">{{ $emp->commission_rate }}</td>
                         <td class="px-3 py-2 space-x-2">

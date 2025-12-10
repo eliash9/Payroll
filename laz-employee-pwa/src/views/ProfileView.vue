@@ -25,7 +25,7 @@ const handleLogout = () => {
 
     <!-- Profile Card -->
     <div class="bg-white rounded-xl shadow-sm p-6 mb-6 flex items-center space-x-4">
-      <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+      <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center text-primary">
         <User class="w-8 h-8" />
       </div>
       <div>
@@ -40,14 +40,14 @@ const handleLogout = () => {
         <Briefcase class="w-5 h-5 text-gray-400" />
         <div>
           <p class="text-xs text-gray-500">Jabatan</p>
-          <p class="font-medium text-gray-900">Staff Lapangan</p>
+          <p class="font-medium text-gray-900">{{ authStore.user?.position?.name || '-' }}</p>
         </div>
       </div>
       <div class="p-4 flex items-center space-x-3">
         <Building class="w-5 h-5 text-gray-400" />
         <div>
           <p class="text-xs text-gray-500">Cabang</p>
-          <p class="font-medium text-gray-900">Pusat</p>
+          <p class="font-medium text-gray-900">{{ authStore.user?.branch?.name || '-' }}</p>
         </div>
       </div>
     </div>

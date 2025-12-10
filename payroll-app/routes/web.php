@@ -69,6 +69,7 @@ Route::middleware(['auth', 'verified', 'company.scope', 'role:admin,manager'])->
     Route::get('employees/export', [EmployeeController::class, 'export'])->name('employees.export');
     Route::post('employees/import', [EmployeeController::class, 'import'])->name('employees.import');
     Route::get('employees/import-template', [EmployeeController::class, 'importTemplate'])->name('employees.import-template');
+    Route::get('employees/custom-locations', [EmployeeController::class, 'customLocations'])->name('employees.custom-locations'); // New route
     Route::resource('employees', EmployeeController::class)->except(['show']);
     Route::get('employees/{employee}', [EmployeeController::class, 'show'])->name('employees.show');
     Route::get('employees/{employee}/mutations/create', [\App\Http\Controllers\MutationController::class, 'create'])->name('employees.mutations.create');
@@ -96,6 +97,7 @@ Route::middleware(['auth', 'verified', 'company.scope', 'role:admin,manager'])->
     Route::resource('employee-kpi', EmployeeKpiAssignmentController::class)->except(['show']);
     Route::resource('employee-bpjs', EmployeeBpjsController::class)->except(['show']);
     Route::resource('employee-loans', \App\Http\Controllers\EmployeeLoanController::class)->except(['show']);
+    Route::resource('work-locations', \App\Http\Controllers\WorkLocationController::class)->except(['show']);
     Route::get('fundraising-transactions', [FundraisingTransactionUiController::class, 'index'])->name('fundraising.transactions.index');
     Route::get('fundraising-transactions/create', [FundraisingTransactionUiController::class, 'create'])->name('fundraising.transactions.create');
     Route::post('fundraising-transactions', [FundraisingTransactionUiController::class, 'store'])->name('fundraising.transactions.store');
@@ -147,6 +149,7 @@ Route::middleware(['auth'])->prefix('laz')->name('laz.')->group(function () {
 
     Route::resource('programs', App\Http\Controllers\Laz\ProgramController::class)->middleware('laz.role:admin,admin_pusat');
     Route::resource('periods', App\Http\Controllers\Laz\ProgramPeriodController::class)->middleware('laz.role:admin,admin_pusat');
+    Route::resource('survey-templates', App\Http\Controllers\Laz\SurveyTemplateController::class)->middleware('laz.role:admin,admin_pusat');
 
     Route::get('applications', [App\Http\Controllers\Laz\ApplicationController::class, 'index'])->name('applications.index')->middleware('laz.role:admin,admin_pusat,admin_cabang,approver,keuangan,surveyor,auditor');
     Route::get('applications/{application}', [App\Http\Controllers\Laz\ApplicationController::class, 'show'])->name('applications.show')->middleware('laz.role:admin,admin_pusat,admin_cabang,approver,keuangan,surveyor,auditor');
@@ -154,7 +157,9 @@ Route::middleware(['auth'])->prefix('laz')->name('laz.')->group(function () {
     Route::post('applications/{application}/assign-surveyor', [App\Http\Controllers\Laz\ApplicationController::class, 'assignSurveyor'])->name('applications.assign-surveyor')->middleware('laz.role:admin,admin_pusat,admin_cabang');
 
     Route::get('surveys', [App\Http\Controllers\Laz\SurveyController::class, 'index'])->name('surveys.index')->middleware('laz.role:admin,admin_pusat,admin_cabang,surveyor');
+    Route::get('applications/{application}/survey/create', [App\Http\Controllers\Laz\SurveyController::class, 'create'])->name('surveys.create')->middleware('laz.role:admin,admin_pusat,admin_cabang,surveyor');
     Route::post('applications/{application}/survey', [App\Http\Controllers\Laz\SurveyController::class, 'store'])->name('surveys.store')->middleware('laz.role:admin,admin_pusat,admin_cabang,surveyor');
+    Route::get('surveys/{survey}', [App\Http\Controllers\Laz\SurveyController::class, 'show'])->name('surveys.show')->middleware('laz.role:admin,admin_pusat,admin_cabang,surveyor,approver,keuangan,auditor');
 
     Route::get('approvals', [App\Http\Controllers\Laz\ApprovalController::class, 'index'])->name('approvals.index')->middleware('laz.role:admin,approver');
     Route::post('applications/{application}/approve', [App\Http\Controllers\Laz\ApprovalController::class, 'store'])->name('approvals.store')->middleware('laz.role:admin,approver');
@@ -172,6 +177,7 @@ Route::middleware(['auth'])->prefix('laz')->name('laz.')->group(function () {
 
     Route::get('settings', [App\Http\Controllers\Laz\LazSettingController::class, 'index'])->name('settings.index')->middleware('laz.role:admin,admin_pusat');
     Route::post('settings', [App\Http\Controllers\Laz\LazSettingController::class, 'update'])->name('settings.update')->middleware('laz.role:admin,admin_pusat');
+    Route::post('settings/test', [App\Http\Controllers\Laz\LazSettingController::class, 'sendTest'])->name('settings.test')->middleware('laz.role:admin,admin_pusat');
 });
 
 require __DIR__.'/auth.php';

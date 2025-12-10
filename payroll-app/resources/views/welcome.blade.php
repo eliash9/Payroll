@@ -22,7 +22,15 @@
                     </div>
                     <div class="space-x-4">
                         @auth
-                            <a href="{{ url('/dashboard') }}" class="font-semibold text-gray-600 hover:text-indigo-600 transition duration-300">Dashboard</a>
+                            <div class="flex items-center gap-4">
+                                <a href="{{ url('/dashboard') }}" class="font-semibold text-gray-600 hover:text-indigo-600 transition duration-300">Dashboard</a>
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" class="font-semibold text-red-500 hover:text-red-700 transition duration-300">
+                                        Keluar
+                                    </button>
+                                </form>
+                            </div>
                         @else
                             <a href="{{ route('login') }}" class="font-semibold text-gray-600 hover:text-indigo-600 transition duration-300">Masuk</a>
 
