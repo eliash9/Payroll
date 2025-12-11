@@ -45,7 +45,7 @@
 
                         <x-slot name="content">
                             <x-dropdown-link :href="route('companies.index')" class="{{ request()->routeIs('companies.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
-                                Perusahaan
+                                Instansi
                             </x-dropdown-link>
                             <x-dropdown-link :href="route('branches.index')" class="{{ request()->routeIs('branches.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
                                 Cabang
