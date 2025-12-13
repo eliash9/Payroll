@@ -46,12 +46,15 @@ trait LazWhatsAppSender
                 'Authorization' => $apiKey,
                 'Content-Type' => 'application/json',
             ])->post($url, [
-                'to' => $phone,
-                'number' => $phone,
-                'phone' => $phone, // Redundant but safe for different providers
-                'message' => $message,
-                'text' => $message, // Some use text
-            ]);
+                        'recipient_type'=>'individual',
+                        'to' => $phone,
+                       // 'number' => $phone,
+                       // 'phone' => $phone, // Redundant but safe for different providers
+                       // 'message' => $message,
+                       'type'=>'text',
+                       'text'=>['body'=>$message],
+                       // 'text' => $message, // Some use text
+                    ]);
 
             if (!$response->successful()) {
                 Log::error('WhatsApp API Error: ' . $response->body());

@@ -2,6 +2,7 @@
     $masterActive = request()->routeIs('companies.*')
         || request()->routeIs('branches.*')
         || request()->routeIs('departments.*')
+        || request()->routeIs('jobs.*')
         || request()->routeIs('positions.*')
         || request()->routeIs('shifts.*')
         || request()->routeIs('leave-types.*')
@@ -53,6 +54,9 @@
                             <x-dropdown-link :href="route('departments.index')" class="{{ request()->routeIs('departments.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
                                 Departemen
                             </x-dropdown-link>
+                            <x-dropdown-link :href="route('jobs.index')" class="{{ request()->routeIs('jobs.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
+                                Job Profile
+                            </x-dropdown-link>
                             <x-dropdown-link :href="route('positions.index')" class="{{ request()->routeIs('positions.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
                                 Jabatan
                             </x-dropdown-link>
@@ -66,7 +70,7 @@
                                 Jenis Cuti/Izin
                             </x-dropdown-link>
                             <x-dropdown-link :href="route('payroll-components.index')" class="{{ request()->routeIs('payroll-components.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
-                                Komponen Payroll
+                                Komponen Bisyarah
                             </x-dropdown-link>
                             <x-dropdown-link :href="route('bpjs-rates.index')" class="{{ request()->routeIs('bpjs-rates.*') ? 'font-semibold text-indigo-600 bg-gray-50' : '' }}">
                                 Tarif BPJS
@@ -306,6 +310,9 @@
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('departments.index')" :active="request()->routeIs('departments.*')" class="ps-6">
                     Departemen
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('jobs.index')" :active="request()->routeIs('jobs.*')" class="ps-6">
+                    Job Profile
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('positions.index')" :active="request()->routeIs('positions.*')" class="ps-6">
                     Jabatan

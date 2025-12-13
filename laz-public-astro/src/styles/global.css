@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: monospace;
+
+
+  --color-laz-green-50: #F4F9E2;
+  --color-laz-green-100: #E9F4C6;
+  --color-laz-green-200: #D3E98D;
+  --color-laz-green-300: #BDDE55;
+  --color-laz-green-400: #A7D31C;
+  --color-laz-green-500: #97C00E;
+  --color-laz-green-600: #799A0B;
+  --color-laz-green-700: #5B7308;
+  --color-laz-green-800: #3D4D05;
+  --color-laz-green-900: #1E2603;
+
+  --color-laz-teal-50: #E2F3F6;
+  --color-laz-teal-100: #C6E7EE;
+  --color-laz-teal-200: #8DCFD9;
+  --color-laz-teal-300: #55B7C5;
+  --color-laz-teal-400: #1C9FB1;
+  --color-laz-teal-500: #0F4C5C;
+  --color-laz-teal-600: #0C3D4A;
+  --color-laz-teal-700: #092D37;
+  --color-laz-teal-800: #061E25;
+  --color-laz-teal-900: #030F12;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}

@@ -4,6 +4,7 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">Komponen Payroll</h2>
             <div class="flex items-center gap-2">
                 <button x-data="" x-on:click.prevent="$dispatch('open-modal', 'help-payroll-components')" class="bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700 transition">Bantuan</button>
+                <a href="{{ route('payroll-components.bulk-assign') }}" class="bg-emerald-600 text-white px-3 py-1 rounded text-sm hover:bg-emerald-700 transition">Set Massal</a>
                 <a href="{{ route('payroll-components.create') }}" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition">Tambah</a>
             </div>
         </div>

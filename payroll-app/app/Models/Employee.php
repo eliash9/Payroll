@@ -55,4 +55,21 @@ class Employee extends Model
     {
         return $this->belongsToMany(WorkLocation::class, 'employee_work_location');
     }
+
+    public function payrollComponents()
+    {
+        return $this->belongsToMany(PayrollComponent::class, 'employee_payroll_components')
+            ->withPivot('amount', 'effective_from', 'effective_to')
+            ->withTimestamps();
+    }
+
+    public function educations()
+    {
+        return $this->hasMany(EmployeeEducation::class, 'employee_id');
+    }
+
+    public function certifications()
+    {
+        return $this->hasMany(EmployeeCertification::class, 'employee_id');
+    }
 }

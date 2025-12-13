@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Position;
 use App\Models\Company;
+use App\Models\Department;
+use App\Models\Job;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -18,9 +20,31 @@ class PositionController extends Controller
             $query->where('company_id', Auth::user()->company_id);
         }
 
-        $positions = $query->orderBy('name')->paginate(20);
+        // Fetch all positions needed for hierarchical sorting
+        $allPositions = $query->with(['department', 'parent', 'job.responsibilities', 'job.requirements'])->orderBy('parent_id')->orderBy('name')->get();
+        
+        $positions = $this->sortPositions($allPositions);
 
         return view('masters.positions.index', compact('positions'));
+    }
+
+    private function sortPositions($positions, $parentId = null, $depth = 0)
+    {
+        $result = collect();
+        
+        // Find children of current parent
+        $children = $positions->filter(function ($item) use ($parentId) {
+            return $item->parent_id == $parentId;
+        })->sortBy('name');
+
+        foreach ($children as $child) {
+            $child->depth = $depth;
+            $result->push($child);
+            // Recursively add children
+            $result = $result->merge($this->sortPositions($positions, $child->id, $depth + 1));
+        }
+
+        return $result;
     }
 
     public function create()
@@ -30,16 +54,38 @@ class PositionController extends Controller
             $companiesQuery->where('id', Auth::user()->company_id);
         }
         $companies = $companiesQuery->pluck('name', 'id');
+
+        $departmentsQuery = Department::query();
+        if (Auth::user()->company_id) {
+            $departmentsQuery->where('company_id', Auth::user()->company_id);
+        }
+        $departments = $departmentsQuery->pluck('name', 'id');
+
+        $parentsQuery = Position::query();
+        if (Auth::user()->company_id) {
+            $parentsQuery->where('company_id', Auth::user()->company_id);
+        }
+        $parents = $parentsQuery->pluck('name', 'id');
         
-        return view('masters.positions.create', compact('companies'));
+        $jobsQuery = Job::query();
+        if (Auth::user()->company_id) {
+            $jobsQuery->where('company_id', Auth::user()->company_id);
+        }
+        $jobs = $jobsQuery->pluck('title', 'id');
+
+        return view('masters.positions.create', compact('companies', 'departments', 'parents', 'jobs'));
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
             'company_id' => 'required|integer|exists:companies,id',
+            'department_id' => 'nullable|integer|exists:departments,id',
+            'job_id' => 'nullable|integer|exists:job_profiles,id',
+            'parent_id' => 'nullable|integer|exists:positions,id',
             'name' => 'required|string|max:191',
             'code' => 'nullable|string|max:50|unique:positions,code',
+            'grade' => 'nullable|string|max:50',
             'description' => 'nullable|string',
         ]);
 
@@ -66,7 +112,25 @@ class PositionController extends Controller
         }
         $companies = $companiesQuery->pluck('name', 'id');
 
-        return view('masters.positions.edit', compact('position', 'companies'));
+        $departmentsQuery = Department::query();
+        if (Auth::user()->company_id) {
+            $departmentsQuery->where('company_id', Auth::user()->company_id);
+        }
+        $departments = $departmentsQuery->pluck('name', 'id');
+
+        $parentsQuery = Position::query()->where('id', '!=', $id);
+        if (Auth::user()->company_id) {
+            $parentsQuery->where('company_id', Auth::user()->company_id);
+        }
+        $parents = $parentsQuery->pluck('name', 'id');
+
+        $jobsQuery = Job::query();
+        if (Auth::user()->company_id) {
+            $jobsQuery->where('company_id', Auth::user()->company_id);
+        }
+        $jobs = $jobsQuery->pluck('title', 'id');
+
+        return view('masters.positions.edit', compact('position', 'companies', 'departments', 'parents', 'jobs'));
     }
 
     public function update(Request $request, int $id)
@@ -79,8 +143,12 @@ class PositionController extends Controller
 
         $data = $request->validate([
             'company_id' => 'required|integer|exists:companies,id',
+            'department_id' => 'nullable|integer|exists:departments,id',
+            'job_id' => 'nullable|integer|exists:job_profiles,id',
+            'parent_id' => 'nullable|integer|exists:positions,id',
             'name' => 'required|string|max:191',
             'code' => 'nullable|string|max:50|unique:positions,code,' . $id,
+            'grade' => 'nullable|string|max:50',
             'description' => 'nullable|string',
         ]);
         

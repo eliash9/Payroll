@@ -38,9 +38,17 @@ class PublicApplicationController extends Controller
             'location_regency' => 'required|string',
             
             // Documents
+
             'documents' => 'nullable|array',
             'documents.*.file' => 'required|file|max:5120', // 5MB max
             'documents.*.type' => 'required|string',
+
+            // Beneficiaries
+            'is_applicant_beneficiary' => 'boolean',
+            'beneficiaries' => 'nullable|array',
+            'beneficiaries.*.name' => 'required_if:is_applicant_beneficiary,false|string',
+            'beneficiaries.*.national_id' => 'nullable|string',
+            'beneficiaries.*.address' => 'nullable|string',
         ]);
 
         return DB::transaction(function () use ($validated, $request) {
@@ -56,6 +64,7 @@ class PublicApplicationController extends Controller
                 ]
             );
 
+
             // 2. Create Application
             $code = 'APP-' . now()->format('Ymd') . '-' . strtoupper(Str::random(5));
             
@@ -65,6 +74,7 @@ class PublicApplicationController extends Controller
                 'program_period_id' => $validated['program_period_id'],
                 'applicant_type' => 'individual',
                 'applicant_id' => $applicant->id,
+                'is_applicant_beneficiary' => $request->boolean('is_applicant_beneficiary', true),
                 'requested_amount' => $validated['requested_amount'],
                 'requested_aid_type' => 'uang', // Default to 'uang' for now, or add to form
                 'need_description' => $validated['need_description'],
@@ -72,6 +82,29 @@ class PublicApplicationController extends Controller
                 'location_regency' => $validated['location_regency'],
                 'status' => 'submitted',
             ]);
+
+
+            // Create Application Beneficiaries if provided and distinct from applicant
+            $isApplicantBeneficiary = filter_var($request->input('is_applicant_beneficiary'), FILTER_VALIDATE_BOOLEAN);
+            
+            if (!$isApplicantBeneficiary && $request->has('beneficiaries')) {
+                $beneficiaries = $request->input('beneficiaries');
+                
+                // Use a loop to handle array/object structure from FormData
+                // FormData arrays often come like beneficiaries[0][name], which Laravel parses to array
+                foreach ($beneficiaries as $index => $beneficiary) {
+                    if (is_array($beneficiary)) {
+                         \App\Models\ApplicationBeneficiary::create([
+                            'application_id' => $application->id,
+                            'name' => $beneficiary['name'] ?? '',
+                            'national_id' => $beneficiary['national_id'] ?? null,
+                            'address' => $beneficiary['address'] ?? null,
+                            'phone' => $beneficiary['phone'] ?? null,
+                            'description' => $beneficiary['description'] ?? null,
+                        ]);
+                    }
+                }
+            }
 
             // 3. Handle Documents
             // 3. Handle Documents

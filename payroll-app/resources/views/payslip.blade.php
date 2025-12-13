@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-xl font-semibold">Slip Gaji / Insentif</h1>
+                <h1 class="text-xl font-semibold">Slip Bisyarah / Insentif</h1>
                 <p class="text-sm text-slate-500">{{ $period->name }} ({{ $period->code }})</p>
             </div>
             <div class="text-right text-sm text-slate-600">
@@ -59,7 +59,7 @@
 
         <div class="bg-white shadow-sm rounded p-4 grid grid-cols-3 gap-4 text-sm">
             <div>
-                <p class="text-slate-500">Pendapatan Bruto</p>
+                <p class="text-slate-500">Pendapatan Bruto (Bisyarah Kotor)</p>
                 <p class="text-lg font-semibold">Rp {{ number_format($header->gross_income,0,',','.') }}</p>
             </div>
             <div>

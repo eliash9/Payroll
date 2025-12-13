@@ -13,7 +13,10 @@ class Program extends Model
     protected $fillable = [
         'name',
         'category',
+
         'description',
+        'specific_requirements',
+        'required_documents',
         'allowed_recipient_type',
         'coverage_scope',
         'is_active',
@@ -21,7 +24,9 @@ class Program extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'required_documents' => 'array',
     ];
+
 
     public function periods(): HasMany
     {

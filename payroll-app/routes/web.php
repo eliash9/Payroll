@@ -22,11 +22,14 @@ use App\Http\Controllers\EmployeeBpjsController;
 use App\Http\Controllers\FundraisingTransactionUiController;
 use App\Http\Controllers\ExpenseClaimUiController;
 use App\Http\Controllers\UserController;
+
+
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
 
 // Fix for shared hosting storage link
 Route::get('/storage-link', function () {
@@ -65,6 +68,8 @@ Route::middleware(['auth', 'verified', 'company.scope', 'role:admin,manager'])->
 
     Route::get('/payslips', [PayslipController::class, 'index'])->name('payslips.index');
     Route::get('/payslip/{periodId}/{employeeId}', [PayslipController::class, 'show'])->name('payslips.show');
+    Route::get('/payslip/{periodId}/{employeeId}/edit', [PayslipController::class, 'edit'])->name('payslips.edit');
+    Route::put('/payslip/{periodId}/{employeeId}', [PayslipController::class, 'update'])->name('payslips.update');
 
     Route::get('employees/export', [EmployeeController::class, 'export'])->name('employees.export');
     Route::post('employees/import', [EmployeeController::class, 'import'])->name('employees.import');
@@ -72,6 +77,15 @@ Route::middleware(['auth', 'verified', 'company.scope', 'role:admin,manager'])->
     Route::get('employees/custom-locations', [EmployeeController::class, 'customLocations'])->name('employees.custom-locations'); // New route
     Route::resource('employees', EmployeeController::class)->except(['show']);
     Route::get('employees/{employee}', [EmployeeController::class, 'show'])->name('employees.show');
+    Route::post('employees/{employee}/components', [EmployeeController::class, 'storeComponent'])->name('employees.components.store');
+    Route::delete('employees/{employee}/components/{component}', [EmployeeController::class, 'destroyComponent'])->name('employees.components.destroy');
+    
+    Route::post('employees/{employee}/educations', [EmployeeController::class, 'storeEducation'])->name('employees.educations.store');
+    Route::delete('employees/{employee}/educations/{education}', [EmployeeController::class, 'destroyEducation'])->name('employees.educations.destroy');
+    
+    Route::post('employees/{employee}/certifications', [EmployeeController::class, 'storeCertification'])->name('employees.certifications.store');
+    Route::delete('employees/{employee}/certifications/{certification}', [EmployeeController::class, 'destroyCertification'])->name('employees.certifications.destroy');
+
     Route::get('employees/{employee}/mutations/create', [\App\Http\Controllers\MutationController::class, 'create'])->name('employees.mutations.create');
     Route::post('employees/{employee}/mutations', [\App\Http\Controllers\MutationController::class, 'store'])->name('employees.mutations.store');
     // Branches, Departments, etc. are usually company-specific, so managers can manage them.
@@ -88,8 +102,11 @@ Route::middleware(['auth', 'verified', 'company.scope', 'role:admin,manager'])->
     Route::post('positions/import', [PositionController::class, 'import'])->name('positions.import');
     Route::get('positions/import-template', [PositionController::class, 'importTemplate'])->name('positions.import-template');
     Route::resource('positions', PositionController::class)->except(['show']);
+    Route::resource('jobs', \App\Http\Controllers\JobController::class);
     Route::resource('shifts', ShiftController::class)->except(['show']);
     Route::resource('leave-types', LeaveTypeController::class)->except(['show']);
+    Route::get('payroll-components/bulk-assign', [PayrollComponentController::class, 'bulkAssign'])->name('payroll-components.bulk-assign');
+    Route::post('payroll-components/bulk-assign', [PayrollComponentController::class, 'storeBulkAssign'])->name('payroll-components.bulk-assign.store');
     Route::resource('payroll-components', PayrollComponentController::class)->except(['show']);
     Route::resource('bpjs-rates', BpjsRateController::class)->except(['show']);
     Route::resource('tax-rates', TaxRateController::class)->except(['show']);
@@ -123,6 +140,7 @@ Route::middleware(['auth', 'verified', 'company.scope', 'role:admin,manager'])->
     Route::get('/payroll-periods/{id}/preview-volunteer', [PayrollPeriodController::class, 'previewVolunteer'])->name('payroll.periods.preview.volunteer');
     Route::post('/payroll-periods/{id}/generate-volunteer', [PayrollPeriodController::class, 'generateVolunteer'])->name('payroll.periods.generate.volunteer');
     Route::post('/payroll-periods/{id}/generate-regular', [PayrollPeriodController::class, 'generateRegular'])->name('payroll.periods.generate.regular');
+    Route::get('/payroll-periods/{id}', [PayrollPeriodController::class, 'show'])->name('payroll.periods.show');
     Route::delete('/payroll-periods/{id}', [PayrollPeriodController::class, 'destroy'])->name('payroll.periods.destroy');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

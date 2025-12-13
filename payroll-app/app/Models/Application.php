@@ -22,6 +22,7 @@ class Application extends Model
         'completed',
     ];
 
+
     protected $fillable = [
         'code',
         'program_id',
@@ -30,6 +31,7 @@ class Application extends Model
         'applicant_id',
         'organization_id',
         'branch_id',
+        'is_applicant_beneficiary', // Added
         'requested_amount',
         'requested_aid_type',
         'need_description',
@@ -42,6 +44,7 @@ class Application extends Model
 
     protected $casts = [
         'requested_amount' => 'decimal:2',
+        'is_applicant_beneficiary' => 'boolean', // Added
     ];
 
     public function program()
@@ -57,6 +60,12 @@ class Application extends Model
     public function applicant()
     {
         return $this->belongsTo(Applicant::class);
+    }
+    
+    // Relationship for beneficiaries
+    public function beneficiaries()
+    {
+        return $this->hasMany(ApplicationBeneficiary::class);
     }
 
     public function organization()

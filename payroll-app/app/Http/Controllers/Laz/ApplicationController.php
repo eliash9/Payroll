@@ -51,9 +51,10 @@ class ApplicationController extends Controller
         ]);
     }
 
+
     public function show(Application $application): View
     {
-        $application->load(['program', 'period', 'applicant', 'organization', 'documents', 'surveys.surveyor', 'surveys.photos', 'approvals.approver', 'disbursements.officer', 'disbursements.items', 'disbursements.proofs']);
+        $application->load(['program', 'period', 'applicant', 'organization', 'documents', 'surveys.surveyor', 'surveys.photos', 'approvals.approver', 'disbursements.officer', 'disbursements.items', 'disbursements.proofs', 'beneficiaries']);
 
         if ($requestBranch = request()->user()->branch_id) {
             if (request()->user()->hasRole('admin_cabang') && $application->branch_id !== $requestBranch) {

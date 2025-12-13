@@ -20,10 +20,42 @@
                         <label class="text-sm text-slate-600">Kategori</label>
                         <input name="category" value="{{ old('category', $program->category) }}" class="mt-1 w-full border rounded px-3 py-2">
                     </div>
+
                     <div>
                         <label class="text-sm text-slate-600">Deskripsi</label>
                         <textarea name="description" rows="3" class="mt-1 w-full border rounded px-3 py-2">{{ old('description', $program->description) }}</textarea>
                     </div>
+
+                    <div>
+                        <label class="text-sm text-slate-600">Syarat & Ketentuan Khusus</label>
+                        <span class="text-xs text-gray-500 block mb-1">Jelaskan persyaratan khusus jika ada (misal: "Hanya untuk warga Desa X", "Usia 18-35 tahun"). Kosongkan jika tidak ada.</span>
+                        <textarea name="specific_requirements" rows="3" class="mt-1 w-full border rounded px-3 py-2 placeholder-gray-300" placeholder="Contoh: Pemohon wajib berdomisili di wilayah kecamatan Sidogiri...">{{ old('specific_requirements', $program->specific_requirements) }}</textarea>
+                    </div>
+
+                    <div>
+                        <label class="text-sm text-slate-600 block mb-1">Dokumen Wajib</label>
+                        <span class="text-xs text-gray-500 block mb-2">Pilih dokumen yang wajib dilampirkan pemohon.</span>
+                        
+                        @php
+                            $commonDocs = ['KTP', 'KK', 'SKTM', 'Proposal', 'Foto Rumah', 'Surat Keterangan Usaha', 'RAB'];
+                            $currentDocs = old('required_documents', $program->required_documents) ?? [];
+                        @endphp
+
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 bg-slate-50 p-4 rounded border">
+                            @foreach ($commonDocs as $doc)
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" name="required_documents[]" value="{{ $doc }}" 
+                                        @checked(in_array($doc, $currentDocs))>
+                                    <span class="text-sm">{{ $doc }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                        
+                        <div class="mt-2 text-xs text-gray-400">
+                             * Dokumen "Lainnya" selalu tersedia secara default di formulir.
+                        </div>
+                    </div>
+
                     <div>
                         <label class="text-sm text-slate-600">Jenis penerima</label>
                         <select name="allowed_recipient_type" class="mt-1 w-full border rounded px-3 py-2">

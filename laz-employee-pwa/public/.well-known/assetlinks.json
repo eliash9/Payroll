@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.lazsidogiri.absensi.twa",
+        "sha256_cert_fingerprints": ["C4:5B:66:34:2E:3D:57:60:7E:C3:05:86:EC:FA:3D:25:05:12:07:3A:EB:07:88:7E:CC:F5:E2:39:1B:D5:4E:52"]
+      }
+    }]

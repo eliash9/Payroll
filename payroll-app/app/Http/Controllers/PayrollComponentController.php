@@ -126,4 +126,63 @@ class PayrollComponentController extends Controller
         $payrollComponent->delete();
         return redirect()->route('payroll-components.index')->with('success', 'Komponen payroll dihapus.');
     }
+
+    public function bulkAssign()
+    {
+        $components = PayrollComponent::where('company_id', Auth::user()->company_id ?? 1)->orderBy('name')->get();
+        $branches = \App\Models\Branch::where('company_id', Auth::user()->company_id ?? 1)->pluck('name', 'id');
+        $departments = \App\Models\Department::where('company_id', Auth::user()->company_id ?? 1)->pluck('name', 'id');
+        $positions = \App\Models\Position::where('company_id', Auth::user()->company_id ?? 1)->pluck('name', 'id');
+
+        return view('masters.payroll_components.bulk_assign', compact('components', 'branches', 'departments', 'positions'));
+    }
+
+    public function storeBulkAssign(Request $request)
+    {
+        $request->validate([
+            'payroll_component_id' => 'required|exists:payroll_components,id',
+            'amount' => 'required|numeric',
+            'target_type' => 'required|in:all,branch,department,position,volunteer,regular',
+            'target_value' => 'nullable', 
+        ]);
+
+        $query = \App\Models\Employee::where('company_id', Auth::user()->company_id ?? 1)
+            ->where('status', 'active');
+
+        switch ($request->target_type) {
+            case 'branch':
+                $query->where('branch_id', $request->target_value);
+                break;
+            case 'department':
+                $query->where('department_id', $request->target_value);
+                break;
+            case 'position':
+                $query->where('position_id', $request->target_value);
+                break;
+            case 'volunteer':
+                $query->where('is_volunteer', true);
+                break;
+            case 'regular':
+                $query->where('is_volunteer', false);
+                break;
+        }
+
+        $employees = $query->get();
+        $count = 0;
+
+        foreach ($employees as $employee) {
+            $employee->payrollComponents()->syncWithoutDetaching([
+                $request->payroll_component_id => [
+                    'amount' => $request->amount,
+                    'effective_from' => now()->toDateString(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            ]);
+            $count++;
+        }
+
+        return redirect()->route('payroll-components.index')
+            ->with('success', "Komponen berhasil diterapkan ke {$count} karyawan.");
+    }
 }

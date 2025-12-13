@@ -56,6 +56,60 @@ class PayrollPeriodController extends Controller
         return view('payroll.index', compact('periods', 'companies', 'companyId'));
     }
 
+    public function show($id)
+    {
+        $period = PayrollPeriod::findOrFail($id);
+        
+        if (Auth::user()->company_id && $period->company_id != Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this period.');
+        }
+
+        // Summary Statistics
+        $regularCount = DB::table('employees')
+            ->where('company_id', $period->company_id)
+            ->where('is_volunteer', false)
+            ->where('status', 'active')
+            ->count();
+
+        $volunteerCount = DB::table('employees')
+            ->where('company_id', $period->company_id)
+            ->where('is_volunteer', true)
+            ->where('status', 'active')
+            ->count();
+
+        $generatedRegular = DB::table('payroll_headers')
+            ->join('employees', 'employees.id', '=', 'payroll_headers.employee_id')
+            ->where('payroll_headers.payroll_period_id', $id)
+            ->where('employees.is_volunteer', false)
+            ->count();
+
+        $generatedVolunteer = DB::table('payroll_headers')
+            ->join('employees', 'employees.id', '=', 'payroll_headers.employee_id')
+            ->where('payroll_headers.payroll_period_id', $id)
+            ->where('employees.is_volunteer', true)
+            ->count();
+
+        $totalNet = DB::table('payroll_headers')
+            ->where('payroll_period_id', $id)
+            ->sum('net_income');
+            
+        // Load recent headers for display
+        $headers = \App\Models\PayrollHeader::with('employee')
+            ->where('payroll_period_id', $id)
+            ->orderByDesc('net_income')
+            ->paginate(50);
+
+        return view('payroll.show', compact(
+            'period', 
+            'regularCount', 
+            'volunteerCount', 
+            'generatedRegular', 
+            'generatedVolunteer', 
+            'totalNet',
+            'headers'
+        ));
+    }
+
     public function generateVolunteer(int $id, VolunteerPayrollService $service)
     {
         $period = PayrollPeriod::findOrFail($id);

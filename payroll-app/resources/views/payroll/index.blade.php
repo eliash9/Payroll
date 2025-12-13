@@ -83,29 +83,9 @@
                         <td class="px-3 py-2 text-right">{{ $p->slip_count ?? 0 }}</td>
                         <td class="px-3 py-2 text-right">Rp {{ number_format($p->net_total ?? 0,0,',','.') }}</td>
                         <td class="px-3 py-2 space-x-2">
-                            <a class="text-blue-700 underline text-xs" href="{{ route('payroll.periods.preview.regular', $p->id) }}">Preview Reguler</a>
-                            <a class="text-emerald-700 underline text-xs" href="{{ route('payroll.periods.preview.volunteer', $p->id) }}">Preview Relawan</a>
-                            <form class="inline" method="post" action="{{ route('payroll.periods.generate.regular', $p->id) }}">
-                                @csrf
-                                <button class="bg-blue-600 text-white px-3 py-1 rounded text-xs" onclick="return confirm('Generate payroll reguler periode ini?')">Generate Reguler</button>
-                            </form>
-                            <form class="inline" method="post" action="{{ route('payroll.periods.generate.volunteer', $p->id) }}">
-                                @csrf
-                                <button class="bg-emerald-600 text-white px-3 py-1 rounded text-xs" onclick="return confirm('Generate payroll relawan periode ini?')">Generate Relawan</button>
-                            </form>
-                            @if($p->status === 'calculated')
-                                <form class="inline" method="post" action="{{ route('payroll.periods.approve', $p->id) }}">
-                                    @csrf
-                                    <button class="bg-amber-600 text-white px-3 py-1 rounded text-xs" onclick="return confirm('Setujui payroll periode ini? Data akan dikunci.')">Setujui</button>
-                                </form>
-                            @endif
-                            @if(!in_array($p->status, ['approved','closed']))
-                                <form class="inline" method="post" action="{{ route('payroll.periods.destroy', $p->id) }}">
-                                    @csrf
-                                    @method('delete')
-                                    <button class="bg-red-600 text-white px-3 py-1 rounded text-xs" onclick="return confirm('Hapus periode dan data hitungannya?')">Hapus</button>
-                                </form>
-                            @endif
+                            <a href="{{ route('payroll.periods.show', $p->id) }}" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 transition">
+                                Kelola Periode
+                            </a>
                         </td>
                     </tr>
                 @empty

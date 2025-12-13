@@ -35,6 +35,15 @@ class RegularPayrollService
                     ->whereBetween('work_date', [$period->start_date, $period->end_date])
                     ->sum('total_minutes');
 
+                // Calculate Attendance Stats
+                $attendanceStats = DB::table('attendance_summaries')
+                    ->where('employee_id', $emp->id)
+                    ->whereBetween('work_date', [$period->start_date, $period->end_date])
+                    ->selectRaw('count(*) as days, sum(worked_minutes) as minutes')
+                    ->first();
+                $daysPresent = $attendanceStats->days ?? 0;
+                $totalWorkedHours = ($attendanceStats->minutes ?? 0) / 60;
+
                 $hourlyRate = ($emp->basic_salary / 173);
                 $overtimePay = $this->calculateOvertimePay($overtimeMinutes, $hourlyRate);
                 $gross = (float) $emp->basic_salary + $overtimePay;
@@ -42,6 +51,36 @@ class RegularPayrollService
                 $componentItems = $this->getEmployeeComponents($emp->id, $period->start_date, $period->end_date);
                 $kpiItems = $this->getKpiComponents($emp->id, $period->start_date, $period->end_date, $period->company_id);
                 $componentItems = array_merge($componentItems, $kpiItems);
+                
+                // Calculate Variable Components
+                foreach ($componentItems as &$item) {
+                     $item['quantity'] = 1; // Default
+                     
+                     if ($item['calculation_method'] === 'attendance_based') {
+                         // Rate * Days
+                         $item['quantity'] = $daysPresent;
+                         $item['amount'] = $item['amount'] * $daysPresent; 
+                         $item['label'] .= " ({$daysPresent} hari)";
+                     } elseif ($item['calculation_method'] === 'formula' && !empty($item['formula'])) {
+                         // Parse Formula
+                         // Variables: basic_salary, days, hours, amount (the set amount)
+                         // Formula example: "amount * hours" or "basic_salary * 0.1"
+                         $vars = [
+                             'basic_salary' => $emp->basic_salary,
+                             'days' => $daysPresent,
+                             'hours' => $totalWorkedHours,
+                             'amount' => $item['amount'],
+                         ];
+                         
+                         $item['amount'] = $this->evaluateComponentFormula($item['formula'], $vars);
+                         
+                         // Try to guess quantity for display
+                         if (str_contains($item['formula'], 'days')) $item['quantity'] = $daysPresent;
+                         if (str_contains($item['formula'], 'hours')) $item['quantity'] = $totalWorkedHours;
+                     }
+                }
+                unset($item); // Break reference
+
                 foreach ($componentItems as $item) {
                     if ($item['type'] === 'earning') {
                         $gross += $item['amount'];
@@ -77,9 +116,9 @@ class RegularPayrollService
                 );
 
                 $header = DB::table('payroll_headers')
-                    ->where('payroll_period_id', $period->id)
-                    ->where('employee_id', $emp->id)
-                    ->first();
+                     ->where('payroll_period_id', $period->id)
+                     ->where('employee_id', $emp->id)
+                     ->first();
 
                 $components = $this->ensureComponents($period->company_id);
 
@@ -111,7 +150,7 @@ class RegularPayrollService
                         'payroll_header_id' => $header->id,
                         'payroll_component_id' => $item['payroll_component_id'],
                         'amount' => $item['type'] === 'deduction' ? -1 * $item['amount'] : $item['amount'],
-                        'quantity' => 1,
+                        'quantity' => $item['quantity'] ?? 1,
                         'remark' => $item['label'],
                         'created_at' => now(),
                         'updated_at' => now(),
@@ -478,6 +517,7 @@ class RegularPayrollService
                     'label' => $row->name,
                     'type' => $row->type,
                     'amount' => (float) $row->amount,
+                    'calculation_method' => $row->calculation_method, // Added
                 ];
             })
             ->all();
@@ -565,5 +605,29 @@ class RegularPayrollService
             'K/3' => 72000000,
         ];
         return $map[$ptkpStatus] ?? 54000000;
+    }
+
+    private function evaluateComponentFormula(?string $formula, array $vars): float
+    {
+        if (!$formula) {
+            return 0;
+        }
+
+        $cleanFormula = str_replace(array_keys($vars), '', $formula);
+        if (preg_match('/[a-z]/i', $cleanFormula)) {
+             return 0; 
+        }
+
+        $expr = $formula;
+        foreach ($vars as $key => $val) {
+             $expr = str_replace($key, $val, $expr);
+        }
+
+        try {
+            $result = eval("return {$expr};");
+            return is_numeric($result) ? (float) $result : 0;
+        } catch (\Throwable $e) {
+            return 0;
+        }
     }
 }

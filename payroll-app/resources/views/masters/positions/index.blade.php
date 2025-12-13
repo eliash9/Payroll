@@ -54,7 +54,10 @@
                 <tr class="bg-slate-100 text-left">
                     <th class="px-3 py-2">Kode</th>
                     <th class="px-3 py-2">Nama</th>
-                    <th class="px-3 py-2">Deskripsi</th>
+                    <th class="px-3 py-2">Departemen</th>
+                    <th class="px-3 py-2">Job Profile</th>
+                    <th class="px-3 py-2">Atasan</th>
+                    <th class="px-3 py-2">Grade</th>
                     <th class="px-3 py-2">Aksi</th>
                 </tr>
                 </thead>
@@ -62,8 +65,29 @@
                 @forelse($positions as $position)
                     <tr class="border-t">
                         <td class="px-3 py-2">{{ $position->code }}</td>
-                        <td class="px-3 py-2">{{ $position->name }}</td>
-                        <td class="px-3 py-2">{{ $position->description }}</td>
+                        <td class="px-3 py-2 font-medium">
+                            <div style="padding-left: {{ ($position->depth ?? 0) * 20 }}px">
+                                @if(($position->depth ?? 0) > 0)
+                                    <span class="text-slate-400 mr-1">↳</span>
+                                @endif
+                                {{ $position->name }}
+                            </div>
+                        </td>
+                        <td class="px-3 py-2">{{ $position->department?->name ?? '-' }}</td>
+                        <td class="px-3 py-2">
+                            @if($position->job)
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-medium">{{ $position->job->title }}</span>
+                                    <button onclick="openJobModal('{{ addslashes($position->job->title) }}', '{{ addslashes($position->job->description) }}', {{ $position->job->responsibilities->toJson() }}, {{ $position->job->requirements->toJson() }})" class="text-xs text-indigo-600 border border-indigo-200 bg-indigo-50 px-2 py-0.5 rounded hover:bg-indigo-100">
+                                        Lihat
+                                    </button>
+                                </div>
+                            @else
+                                <span class="text-slate-400 text-xs">-</span>
+                            @endif
+                        </td>
+                        <td class="px-3 py-2">{{ $position->parent?->name ?? '-' }}</td>
+                        <td class="px-3 py-2">{{ $position->grade ?? '-' }}</td>
                         <td class="px-3 py-2 space-x-2">
                             <a class="text-blue-600 underline" href="{{ route('positions.edit', $position->id) }}">Edit</a>
                             <form method="post" action="{{ route('positions.destroy', $position->id) }}" class="inline">
@@ -74,13 +98,88 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="4" class="px-3 py-4 text-center text-slate-500">Belum ada data</td></tr>
+                    <tr><td colspan="7" class="px-3 py-4 text-center text-slate-500">Belum ada data</td></tr>
                 @endforelse
                 </tbody>
             </table>
-            <div class="mt-4">
-                {{ $positions->links() }}
+        </div>
+    </div>
+
+    <!-- Job Detail Modal -->
+    <div x-data="{ open: false, jobTitle: '', jobDesc: '', responsibilities: [], requirements: [] }" 
+         x-on:open-modal-event.window="
+            open = true; 
+            jobTitle = $event.detail.title; 
+            jobDesc = $event.detail.description; 
+            responsibilities = $event.detail.responsibilities; 
+            requirements = $event.detail.requirements;
+         "
+         x-show="open" 
+         style="display: none;" 
+         class="fixed inset-0 z-50 overflow-y-auto" 
+         aria-labelledby="modal-title" 
+         role="dialog" 
+         aria-modal="true">
+        
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="open" @click="open = false" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title" x-text="jobTitle"></h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500 mb-4" x-text="jobDesc"></p>
+
+                                <div class="mb-4">
+                                    <h4 class="font-semibold text-sm text-gray-700 mb-2">Tanggung Jawab Utama</h4>
+                                    <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
+                                        <template x-for="resp in responsibilities">
+                                            <li>
+                                                <span x-text="resp.responsibility"></span>
+                                                <span x-show="resp.is_primary" class="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">Utama</span>
+                                            </li>
+                                        </template>
+                                        <li x-show="responsibilities.length === 0" class="text-slate-400 italic">Tidak ada data</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <h4 class="font-semibold text-sm text-gray-700 mb-2">Kualifikasi</h4>
+                                    <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
+                                        <template x-for="req in requirements">
+                                            <li>
+                                                <span class="font-medium text-xs uppercase bg-gray-100 px-1 py-0.5 rounded mr-1" x-text="req.type"></span>
+                                                <span x-text="req.requirement"></span>
+                                            </li>
+                                        </template>
+                                        <li x-show="requirements.length === 0" class="text-slate-400 italic">Tidak ada data</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" @click="open = false" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">Tutup</button>
+                </div>
             </div>
         </div>
     </div>
+
+    <script>
+        function openJobModal(title, description, responsibilities, requirements) {
+            window.dispatchEvent(new CustomEvent('open-modal-event', {
+                detail: {
+                    title: title,
+                    description: description,
+                    responsibilities: responsibilities,
+                    requirements: requirements
+                }
+            }));
+        }
+    </script>
 </x-app-layout>

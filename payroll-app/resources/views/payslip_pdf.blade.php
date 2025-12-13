@@ -22,7 +22,7 @@
 <body>
     <div class="header">
         <div>
-            <h1>Slip Gaji / Insentif</h1>
+            <h1>Slip Bisyarah / Insentif</h1>
             <div class="muted">{{ $period->name }} ({{ $period->code }})</div>
             <div class="muted">Periode: {{ $period->start_date }} s/d {{ $period->end_date }}</div>
         </div>
@@ -63,7 +63,7 @@
 
     <div class="summary">
         <div class="card">
-            <div class="card-title">Pendapatan Bruto</div>
+            <div class="card-title">Bisyarah Bruto</div>
             <div class="card-value">Rp {{ number_format($header->gross_income,0,',','.') }}</div>
         </div>
         <div class="card">
@@ -74,7 +74,7 @@
             @endif
         </div>
         <div class="card">
-            <div class="card-title">Take Home Pay</div>
+            <div class="card-title">Take Home Pay (Bisyarah Bersih)</div>
             <div class="card-value">Rp {{ number_format($header->net_income,0,',','.') }}</div>
         </div>
     </div>

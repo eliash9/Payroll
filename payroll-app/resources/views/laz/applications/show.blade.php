@@ -108,7 +108,48 @@
                                     </div>
                                 @endif
                             </div>
+
                         </section>
+
+                        <!-- Beneficiary Details (if not self) -->
+                        @if (!$application->is_applicant_beneficiary && $application->beneficiaries->isNotEmpty())
+                        <section>
+                            <h3 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                Data Penerima Manfaat
+                            </h3>
+                            <div class="space-y-4">
+                                @foreach($application->beneficiaries as $beneficiary)
+                                <div class="bg-orange-50 rounded-xl p-5 border border-orange-100 grid md:grid-cols-2 gap-6 relative">
+                                    <div class="absolute top-4 right-4 bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded font-bold">
+                                        #{{ $loop->iteration }}
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-slate-500 uppercase tracking-wide font-semibold">Nama Penerima</label>
+                                        <p class="text-slate-900 font-medium">{{ $beneficiary->name }}</p>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-slate-500 uppercase tracking-wide font-semibold">NIK (Opsional)</label>
+                                        <p class="text-slate-900 font-medium">{{ $beneficiary->national_id ?? '-' }}</p>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-slate-500 uppercase tracking-wide font-semibold">Kontak</label>
+                                        <p class="text-slate-900 font-medium">{{ $beneficiary->phone ?? '-' }}</p>
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-slate-500 uppercase tracking-wide font-semibold">Alamat</label>
+                                        <p class="text-slate-900 font-medium">{{ $beneficiary->address ?? '-' }}</p>
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <label class="text-xs text-slate-500 uppercase tracking-wide font-semibold">Keterangan / Kondisi</label>
+                                        <p class="text-slate-700 leading-relaxed">{{ $beneficiary->description ?? '-' }}</p>
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
+                        </section>
+                        @endif
+
 
                         <!-- Request Details -->
                         <section>
