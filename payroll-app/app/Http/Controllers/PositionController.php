@@ -21,7 +21,7 @@ class PositionController extends Controller
         }
 
         // Fetch all positions needed for hierarchical sorting
-        $allPositions = $query->with(['department', 'parent', 'job.responsibilities', 'job.requirements'])->orderBy('parent_id')->orderBy('name')->get();
+        $allPositions = $query->with(['department', 'parent', 'job.responsibilities', 'job.requirements'])->orderBy('parent_id')->orderBy('id', 'asc')->get();
         
         $positions = $this->sortPositions($allPositions);
 

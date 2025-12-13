@@ -18,7 +18,7 @@ class DepartmentController extends Controller
             $query->where('company_id', Auth::user()->company_id);
         }
 
-        $departments = $query->orderBy('name')->paginate(20);
+        $departments = $query->orderBy('id', 'asc')->paginate(20);
 
         return view('masters.departments.index', compact('departments'));
     }
